@@ -4,6 +4,12 @@
 
 Inspired by [Nusa](https://rama2555.github.io/nusa/). Jer is an independent app written from scratch.
 
+![Closed notch with music and the lyrics pill](docs/screenshots/closed-music.png)
+
+![Open notch: music with synced lyrics](docs/screenshots/open-music-lyrics.png)
+
+![Pomodoro, Water, Shelf and To-do pages](docs/screenshots/pages.png)
+
 ## Features
 
 - **Music from any player**: Spotify, Apple Music, Media Player and browsers (YouTube) through the Windows media controls. Play, pause, skip, seek, and a volume slider on hover.
@@ -14,9 +20,16 @@ Inspired by [Nusa](https://rama2555.github.io/nusa/). Jer is an independent app 
 - **To-do** with reminder times, task colours and snooze.
 - **Overlays** for volume, Caps Lock, keyboard language, charger/battery and Wi-Fi/internet.
 - **Mascot**: when your PC is idle, the clock steps aside for a pair of eyes that blink, doze off and say hello when you're back.
+
+  ![Mascot](docs/screenshots/mascot.png)
+
 - **Settings window** (tray icon, the gear in the page bar, or start `Jer.exe` again). Every change applies instantly.
 - **Display picker**: put the notch on the main display or on any other display (second screen, third...). Pick it in *Settings → Display* (with a map of your screens and an *Identify* button) or from the tray menu under *Show notch on*. If that display is unplugged, Jer falls back to the main display and moves back when it returns.
 - Hides for full-screen games, videos and slides; minimal-notch mode; notch size; start with Windows; sharp on every display scale (per-monitor DPI).
+
+### Settings and the display picker
+
+![Settings → Display with two displays connected](docs/screenshots/settings-display.png)
 
 ## Download
 

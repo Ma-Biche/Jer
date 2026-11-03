@@ -6,7 +6,7 @@ artifacts/
 *.zip
 
 # Smoke test output
-screenshots/
+/screenshots/
 
 # IDEs
 .vs/
