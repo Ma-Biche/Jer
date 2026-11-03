@@ -72,6 +72,9 @@ public sealed class SingleInstance : IDisposable
     /// <summary>Calls <paramref name="showSettings"/> or <paramref name="quit"/> (on a thread-pool thread) when another copy asks.</summary>
     public void Listen(Action showSettings, Action quit)
     {
+        // A "quit" this copy sent to an older Jer that doesn't listen for it would still be waiting. Clear it first.
+        _quit.Reset();
+        _showSettings.Reset();
         _waits.Add(ThreadPool.RegisterWaitForSingleObject(_showSettings, (_, _) => showSettings(), null, Timeout.Infinite, executeOnlyOnce: false));
         _waits.Add(ThreadPool.RegisterWaitForSingleObject(_quit, (_, _) => quit(), null, Timeout.Infinite, executeOnlyOnce: true));
     }
