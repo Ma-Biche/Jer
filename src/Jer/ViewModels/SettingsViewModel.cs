@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Windows;
 using Jer.Core;
 using Jer.Models;
@@ -104,7 +103,7 @@ public sealed class SettingsViewModel : ObservableObject
     public RelayCommand OpenWebsiteCommand { get; }
     public RelayCommand ExitCommand { get; }
 
-    public string VersionText => "Version " + (Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0");
+    public string VersionText => "Version " + AppInfo.VersionText;
     public string DataFolder => JsonStore.DataDirectory;
 
     public bool StartWithWindows

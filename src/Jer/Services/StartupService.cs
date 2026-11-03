@@ -11,7 +11,7 @@ public static class StartupService
     private const string ApprovedKey = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
     private const string ValueName = "Jer";
 
-    private static string Command => $"\"{Environment.ProcessPath}\" --startup";
+    private static string Command => $"\"{AppInfo.ExecutablePath}\" --startup";
 
     /// <summary>True when Jer is registered and not disabled in Task Manager's Startup tab.</summary>
     public static bool IsEnabled()

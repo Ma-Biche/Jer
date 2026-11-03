@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using Jer.Core;
 
 namespace Jer.Converters;
 
@@ -62,7 +63,7 @@ public sealed class ProgressToDashConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        var progress = value is double d ? Math.Clamp(d, 0, 1) : 0;
+        var progress = value is double d ? MathEx.Clamp(d, 0, 1) : 0;
         var parts = (parameter as string ?? "100,8").Split(',');
         var diameter = double.Parse(parts[0], CultureInfo.InvariantCulture);
         var thickness = double.Parse(parts[1], CultureInfo.InvariantCulture);

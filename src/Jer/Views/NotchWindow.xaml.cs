@@ -948,7 +948,8 @@ public partial class NotchWindow : Window
     private void BuildEqualizer()
     {
         _equalizer = new Storyboard { RepeatBehavior = RepeatBehavior.Forever };
-        Timeline.SetDesiredFrameRate(_equalizer, 24); // Gentle on the CPU.
+        // 15 frames a second is plenty for 14-pixel bars, and costs a third less CPU than 24.
+        Timeline.SetDesiredFrameRate(_equalizer, 15);
         var durations = new[] { 0.46, 0.58, 0.38, 0.52 };
         for (var i = 0; i < EqBars.Children.Count; i++)
         {
@@ -975,7 +976,8 @@ public partial class NotchWindow : Window
             return;
         }
 
-        var run = _mode == Mode.Collapsed && !_settings.MinimalNotch && _vm.IsMusicActive && !_hidden;
+        // The bars rest while nobody is at the PC, so music in the background costs almost no CPU.
+        var run = _mode == Mode.Collapsed && !_settings.MinimalNotch && _vm.IsMusicActive && !_hidden && !_vm.IsUserAway;
         if (run && !_equalizerRunning)
         {
             _equalizer.Begin(this, true);
@@ -1019,7 +1021,7 @@ public partial class NotchWindow : Window
         var typeface = new Typeface(LyricText.FontFamily, LyricText.FontStyle, FontWeights.SemiBold, LyricText.FontStretch);
         var measured = new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, typeface, LyricText.FontSize,
             Brushes.White, VisualTreeHelper.GetDpi(this).PixelsPerDip).WidthIncludingTrailingWhitespace;
-        var width = Math.Clamp(measured + 28 + 19 + 4, 120, 640);
+        var width = MathEx.Clamp(measured + 28 + 19 + 4, 120, 640);
 
         if (!animate)
         {
@@ -1051,7 +1053,7 @@ public partial class NotchWindow : Window
         }
 
         var top = line.TransformToAncestor(LyricsScroller).Transform(new Point(0, 0)).Y;
-        var target = Math.Clamp(LyricsScroller.VerticalOffset + top - (LyricsScroller.ViewportHeight - line.ActualHeight) / 2, 0, LyricsScroller.ScrollableHeight);
+        var target = MathEx.Clamp(LyricsScroller.VerticalOffset + top - (LyricsScroller.ViewportHeight - line.ActualHeight) / 2, 0, LyricsScroller.ScrollableHeight);
         if (animate)
         {
             SmoothScroll(LyricsScroller, target);
@@ -1096,7 +1098,7 @@ public partial class NotchWindow : Window
         if (hasLevel)
         {
             HudLevel.Text = _vm.HudLevelText;
-            HudBarFill.BeginAnimation(WidthProperty, new DoubleAnimation(104 * Math.Clamp(hud.Level!.Value, 0, 1), TimeSpan.FromMilliseconds(140)));
+            HudBarFill.BeginAnimation(WidthProperty, new DoubleAnimation(104 * MathEx.Clamp(hud.Level!.Value, 0, 1), TimeSpan.FromMilliseconds(140)));
         }
     }
 

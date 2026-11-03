@@ -30,7 +30,7 @@ public static class Log
                 var info = new FileInfo(FilePath);
                 if (info.Exists && info.Length > MaxBytes)
                 {
-                    File.Move(FilePath, FilePath + ".old", overwrite: true);
+                    FileUtil.MoveOverwrite(FilePath, FilePath + ".old");
                 }
 
                 File.AppendAllText(

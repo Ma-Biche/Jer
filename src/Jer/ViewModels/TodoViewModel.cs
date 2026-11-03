@@ -350,8 +350,8 @@ public sealed partial class TodoViewModel : ObservableObject
         else
         {
             var digits = m.Groups["d"].Value;
-            hour = int.Parse(digits[..^2], CultureInfo.InvariantCulture);
-            minute = int.Parse(digits[^2..], CultureInfo.InvariantCulture);
+            hour = int.Parse(digits.Substring(0, digits.Length - 2), CultureInfo.InvariantCulture);
+            minute = int.Parse(digits.Substring(digits.Length - 2), CultureInfo.InvariantCulture);
         }
 
         if (hour > 23 || minute > 59)
@@ -363,6 +363,7 @@ public sealed partial class TodoViewModel : ObservableObject
         return due <= DateTime.Now ? due.AddDays(1) : due;
     }
 
-    [GeneratedRegex(@"^(?:(?<h>\d{1,2})(?:[:.](?<m>\d{2}))?|(?<d>\d{3,4}))$")]
-    private static partial Regex TimePattern();
+    private static readonly Regex TimeRegex = new(@"^(?:(?<h>\d{1,2})(?:[:.](?<m>\d{2}))?|(?<d>\d{3,4}))$", RegexOptions.CultureInvariant);
+
+    private static Regex TimePattern() => TimeRegex;
 }

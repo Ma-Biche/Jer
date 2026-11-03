@@ -26,6 +26,7 @@ Inspired by [Nusa](https://rama2555.github.io/nusa/). Jer is an independent app 
 - **Settings window** (tray icon, the gear in the page bar, or start `Jer.exe` again). Every change applies instantly.
 - **Display picker**: put the notch on the main display or on any other display (second screen, third...). Pick it in *Settings → Display* (with a map of your screens and an *Identify* button) or from the tray menu under *Show notch on*. If that display is unplugged, Jer falls back to the main display and moves back when it returns.
 - Hides for full-screen games, videos and slides; minimal-notch mode; notch size; start with Windows; sharp on every display scale (per-monitor DPI).
+- **Light**: one exe under 1 MB that uses the .NET Framework built into Windows, and draws only when something changes.
 
 ### Settings and the display picker
 
@@ -33,14 +34,13 @@ Inspired by [Nusa](https://rama2555.github.io/nusa/). Jer is an independent app 
 
 ## Download
 
-Get the latest version from **[Releases](https://github.com/Ma-Biche/Jer/releases/latest)** (no GitHub account needed):
+Get **`Jer.exe`** from **[Releases](https://github.com/Ma-Biche/Jer/releases/latest)** (no GitHub account needed) and run it. That one file, under 1 MB, is the whole app: no installer and nothing else to install. `Jer.zip` holds the same exe for browsers that block .exe downloads.
 
-- `Jer-win-x64.zip`: most PCs
-- `Jer-win-arm64.zip`: Windows on ARM (Snapdragon)
+Requires Windows 10 (version 1903 or later) or Windows 11; Jer runs on the .NET Framework 4.8 that is part of Windows. One exe works on every PC, including Windows on ARM. Windows SmartScreen may warn about a new unsigned app; choose **More info → Run anyway**. Each release includes `SHA256SUMS.txt` so you can check your download.
 
-Extract the zip and run `Jer.exe`. It is self-contained: no installer and no .NET install needed. Requires Windows 10 1809 or later, or Windows 11 (64-bit). Windows SmartScreen may warn about a new unsigned app; choose **More info → Run anyway**. Each release includes `SHA256SUMS.txt` so you can check your download.
+**Updating:** run the new `Jer.exe`. If an older Jer is running, the new one closes it and takes over, then shows which version is running. Your tasks, water log, shelf and settings stay.
 
-Test builds of every pull request and every push to `main` are under **Actions → Build → Artifacts** (sign-in required). Pushing a tag such as `v1.0.1` builds, tests and publishes a new release.
+Test builds of every pull request and every push to `main` are under **Actions → Build → Artifacts** (sign-in required). Pushing a tag such as `v2.0.1` builds, tests and publishes a new release.
 
 ## Using Jer
 
@@ -50,7 +50,7 @@ Test builds of every pull request and every push to `main` are under **Actions �
 | Mouse wheel / ← → | Switch pages. Hover the page dots for icons and the Settings gear. |
 | Drag onto the notch | Adds files or text to the Shelf. |
 | Tray icon (left click) | Opens Settings. Right click for quick switches and the display picker. |
-| Run `Jer.exe` again | Opens Settings in the copy that is already running. |
+| Run `Jer.exe` again | Opens Settings in the copy that is already running. A newer `Jer.exe` (or a fresh download) replaces the running copy instead. |
 
 Command-line options: `--settings [General|Display|Pages|Pomodoro|Water|Alerts|About]` opens Settings on a page; `--demo` shows sample content without touching your data; `--pin <Music|Pomodoro|Water|Shelf|Todo>` keeps the notch open on a page.
 
@@ -60,17 +60,14 @@ Tasks, the water log, the shelf and settings are stored only on your PC in `%APP
 
 ## Build from source
 
-Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
+Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download) (for the C# 14 compiler). Jer itself targets .NET Framework 4.8; its reference assemblies come from NuGet, so no Visual Studio or targeting pack is needed.
 
 ```powershell
 dotnet build Jer.sln -c Release
-dotnet run --project src/Jer
-
-# single self-contained exe
-dotnet publish src/Jer/Jer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o publish
+# -> src/Jer/bin/Release/net48/Jer.exe (the whole app)
 ```
 
-The project also compiles on Linux/macOS (`EnableWindowsTargeting`), but it only runs on Windows. `build/smoke-test.ps1` starts the exe, drives it with the mouse and saves screenshots; CI runs it on every build.
+The project also compiles on Linux/macOS (`EnableWindowsTargeting`), but it only runs on Windows. `build/smoke-test.ps1` starts the exe, drives it with the mouse, checks that a new version replaces an old one, measures memory and idle CPU, and saves screenshots; CI runs it on every build.
 
 ## Project layout
 
@@ -81,6 +78,7 @@ src/Jer
 ├── ViewModels/           Music, Pomodoro, Water, Shelf, To-do, Settings, notch state
 ├── Services/             media (SMTC), lyrics (LRCLIB), volume (Core Audio), displays,
 │                         tray, start-up, system watcher (idle, full screen, power, network)
+├── Core/                 JSON, logging, small helpers for .NET Framework
 ├── Interop/              Win32 / COM declarations
 ├── Themes/               icons and control styles
 └── Assets/               icons (generated by tools/make_icons.py)
@@ -88,7 +86,7 @@ src/Jer
 
 ## Ringkasan (Bahasa Indonesia)
 
-Jer adalah notch untuk Windows: musik, lirik tersinkron, Pomodoro, pengingat minum, Shelf untuk file, dan to-do, langsung di bagian atas layar. Buka **Settings** lewat ikon Jer di tray (dekat jam). Di **Settings → Display** kamu bisa memindahkan notch ke layar utama atau ke layar kedua (atau layar lain), lengkap dengan peta layar dan tombol *Identify*. Pilihan yang sama ada di menu tray: *Show notch on*. Unduh versi terbaru di **[Releases](https://github.com/Ma-Biche/Jer/releases/latest)** (tanpa login): ambil `Jer-win-x64.zip`, ekstrak, lalu jalankan `Jer.exe`.
+Jer adalah notch untuk Windows: musik, lirik tersinkron, Pomodoro, pengingat minum, Shelf untuk file, dan to-do, langsung di bagian atas layar. Buka **Settings** lewat ikon Jer di tray (dekat jam). Di **Settings → Display** kamu bisa memindahkan notch ke layar utama atau ke layar kedua (atau layar lain), lengkap dengan peta layar dan tombol *Identify*. Pilihan yang sama ada di menu tray: *Show notch on*. Unduh versi terbaru di **[Releases](https://github.com/Ma-Biche/Jer/releases/latest)** (tanpa login): ambil `Jer.exe` (di bawah 1 MB), lalu jalankan. Tidak perlu install apa pun. Untuk update, cukup jalankan `Jer.exe` yang baru: Jer versi lama yang masih berjalan otomatis ditutup dan digantikan, dan data kamu tetap ada.
 
 ## License
 

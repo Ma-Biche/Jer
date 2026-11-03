@@ -20,45 +20,51 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Publish Jer.exe (x64 and arm64)
+      - name: Build Jer.exe
         shell: pwsh
         run: |
-          $version = if ($env:GITHUB_REF -like 'refs/tags/v*') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '1.0.0' }
-          foreach ($rid in 'win-x64', 'win-arm64') {
-            dotnet publish src/Jer/Jer.csproj -c Release -r $rid --self-contained true `
-              -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
-              -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=$version `
-              -o "publish/$rid"
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
+          # Tags (v2.0.1) set the version; every other build uses <Version> from Jer.csproj.
+          $versionArgs = @()
+          if ($env:GITHUB_REF -like 'refs/tags/v*') { $versionArgs = @("-p:Version=$($env:GITHUB_REF_NAME.TrimStart('v'))") }
+          dotnet publish src/Jer/Jer.csproj -c Release -o publish @versionArgs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Jer.exe is the whole app: .NET Framework 4.8 is part of Windows 10 (1903+) and Windows 11.
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item publish/Jer.exe dist/Jer.exe
+          $info = (Get-Item dist/Jer.exe).VersionInfo
+          "Jer.exe {0}: {1:N0} bytes" -f $info.FileVersion, (Get-Item dist/Jer.exe).Length
 
       - name: Smoke test (start Jer, drive it, take screenshots)
         shell: pwsh
-        run: ./build/smoke-test.ps1 -Exe publish/win-x64/Jer.exe -OutDir screenshots
+        run: ./build/smoke-test.ps1 -Exe dist/Jer.exe -OutDir screenshots
+
+      - name: Build the fake media player (test helper)
+        shell: pwsh
+        run: |
+          dotnet build build/fake-player/FakePlayer.csproj -c Release -o fake
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Media test (song info, controls and lyrics through the Windows media controls)
+        shell: powershell
+        run: ./build/media-test.ps1 -Exe dist/Jer.exe -FakePlayer fake/FakePlayer.exe -OutDir screenshots
 
       - name: Package
         shell: pwsh
         run: |
-          Compress-Archive -Path publish/win-x64/Jer.exe -DestinationPath Jer-win-x64.zip
-          Compress-Archive -Path publish/win-arm64/Jer.exe -DestinationPath Jer-win-arm64.zip
-          $files = 'Jer-win-x64.zip', 'Jer-win-arm64.zip', 'publish/win-x64/Jer.exe', 'publish/win-arm64/Jer.exe'
-          $lines = foreach ($file in $files) {
-            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
-            "$hash  $($file -replace '^publish/', '')"
+          Compress-Archive -Path dist/Jer.exe -DestinationPath dist/Jer.zip
+          $lines = foreach ($file in 'Jer.exe', 'Jer.zip') {
+            $hash = (Get-FileHash "dist/$file" -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $file"
           }
           # LF line endings so `sha256sum -c` works on Linux and macOS too.
-          [System.IO.File]::WriteAllText("$PWD/SHA256SUMS.txt", ($lines -join "`n") + "`n")
-          Get-Content SHA256SUMS.txt
+          [System.IO.File]::WriteAllText("$PWD/dist/SHA256SUMS.txt", ($lines -join "`n") + "`n")
+          Get-Content dist/SHA256SUMS.txt
+          Get-ChildItem dist | Format-Table Name, Length
 
       - uses: actions/upload-artifact@v7
         with:
-          name: Jer-win-x64
-          path: publish/win-x64/Jer.exe
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: Jer-win-arm64
-          path: publish/win-arm64/Jer.exe
+          name: Jer
+          path: dist/Jer.exe
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -74,18 +80,7 @@ jobs:
           fail_on_unmatched_files: true
           make_latest: "true"
           files: |
-            Jer-win-x64.zip
-            Jer-win-arm64.zip
-            SHA256SUMS.txt
-          body: |
-            Jer ${{ github.ref_name }}, a living notch for Windows 10 (1809 or later) and Windows 11, 64-bit.
-
-            **Download**
-            - `Jer-win-x64.zip` for most PCs
-            - `Jer-win-arm64.zip` for Windows on ARM (Snapdragon)
-
-            Extract the zip and run `Jer.exe`. No installer and no .NET install needed. Windows SmartScreen may warn because the app is new and not signed: choose **More info → Run anyway**. `SHA256SUMS.txt` lists the SHA-256 of every file so you can check your download.
-
-            **Unduh (Bahasa Indonesia)**: ambil `Jer-win-x64.zip`, ekstrak, lalu jalankan `Jer.exe`. Kalau muncul peringatan SmartScreen, pilih **More info → Run anyway**.
-
-            Settings: click the Jer icon next to the clock. Move the notch to another display in **Settings → Display** or from the tray menu under **Show notch on**.
+            dist/Jer.exe
+            dist/Jer.zip
+            dist/SHA256SUMS.txt
+          body_path: build/release-notes.md

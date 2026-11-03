@@ -84,7 +84,7 @@ public sealed class PomodoroViewModel : ObservableObject
 
             _endsAt = DateTime.Now + Remaining;
             IsRunning = true;
-            _timer.Start();
+            ScheduleTick();
         }
 
         UpdateTexts();
@@ -110,6 +110,25 @@ public sealed class PomodoroViewModel : ObservableObject
         }
 
         UpdateTexts();
+        ScheduleTick();
+    }
+
+    /// <summary>
+    /// Wakes up just after the displayed second changes: one tick per second, and the countdown
+    /// never skips or repeats a number the way a plain one-second timer drifts into doing.
+    /// </summary>
+    private void ScheduleTick()
+    {
+        var remaining = _endsAt - DateTime.Now;
+        var untilNextSecond = remaining.Ticks % TimeSpan.TicksPerSecond;
+        if (untilNextSecond <= 0)
+        {
+            untilNextSecond += TimeSpan.TicksPerSecond;
+        }
+
+        _timer.Stop();
+        _timer.Interval = TimeSpan.FromTicks(untilNextSecond) + TimeSpan.FromMilliseconds(15);
+        _timer.Start();
     }
 
     private void Complete(bool skipped)

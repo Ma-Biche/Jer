@@ -21,7 +21,7 @@ public sealed class ShelfItemViewModel : ObservableObject
         if (model.Kind == ShelfItemKind.Text)
         {
             var text = (model.Text ?? "").Trim().Replace("\r", " ").Replace("\n", " ");
-            Name = text.Length > 60 ? text[..60] + "…" : text;
+            Name = text.Length > 60 ? text.Substring(0, 60) + "…" : text;
             Detail = "Click to copy";
             Icon = Ui.Icon("Text");
         }

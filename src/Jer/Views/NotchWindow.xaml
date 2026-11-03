@@ -240,20 +240,25 @@
                                                     <ColumnDefinition Width="104"/>
                                                 </Grid.ColumnDefinitions>
                                                 <Button Grid.Column="0" Style="{StaticResource LyricsToggleButton}" HorizontalAlignment="Left"
-                                                        Width="32" Height="32" Padding="8" Command="{Binding Music.ToggleLyricsCommand}" ToolTip="Lyrics"/>
+                                                        Width="32" Height="32" Padding="8" Command="{Binding Music.ToggleLyricsCommand}" ToolTip="Lyrics"
+                                                        AutomationProperties.Name="Lyrics"/>
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
                                                     <Button Style="{StaticResource Jer.IconButton}" Tag="{StaticResource Icon.Previous}" Width="36" Height="36" Padding="10"
+                                                            AutomationProperties.Name="Previous"
                                                             Command="{Binding Music.PreviousCommand}" IsEnabled="{Binding Music.Media.CanPrevious}"/>
                                                     <Button Style="{StaticResource PlayPauseButton}" Width="42" Height="42" Padding="10" Margin="4,0"
+                                                            AutomationProperties.Name="Play or pause"
                                                             Command="{Binding Music.PlayPauseCommand}"/>
                                                     <Button Style="{StaticResource Jer.IconButton}" Tag="{StaticResource Icon.Next}" Width="36" Height="36" Padding="10"
+                                                            AutomationProperties.Name="Next"
                                                             Command="{Binding Music.NextCommand}" IsEnabled="{Binding Music.Media.CanNext}"/>
                                                 </StackPanel>
                                                 <StackPanel x:Name="VolumeHost" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Background="Transparent"
                                                             Visibility="{Binding Music.HasVolume, Converter={StaticResource BoolToVisibility}}">
                                                     <Slider x:Name="VolumeSlider" Width="0" Style="{StaticResource Jer.Slider}" Minimum="0" Maximum="100" LargeChange="5"
                                                             Value="{Binding Music.Volume, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,2,0" Opacity="0"/>
-                                                    <Button Style="{StaticResource SpeakerButton}" Width="32" Height="32" Padding="8" Command="{Binding Music.ToggleMuteCommand}"/>
+                                                    <Button Style="{StaticResource SpeakerButton}" Width="32" Height="32" Padding="8" Command="{Binding Music.ToggleMuteCommand}"
+                                                            AutomationProperties.Name="Mute"/>
                                                 </StackPanel>
                                             </Grid>
                                         </Grid>

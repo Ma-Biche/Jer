@@ -5,8 +5,6 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,10 +35,8 @@ public sealed class Lyrics
 /// Synced lyrics from LRCLIB (lrclib.net), a free community library.
 /// Only the title, artist, album and length are sent, and only while lyrics are switched on.
 /// </summary>
-public sealed partial class LyricsService
+public sealed class LyricsService
 {
-    private static readonly HttpClient Http = CreateClient();
-    private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
     // Successful results live for the app session. Misses expire quickly so a temporary
     // LRCLIB outage or late Spotify metadata cannot poison the cache.
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new(StringComparer.OrdinalIgnoreCase);
@@ -48,15 +44,26 @@ public sealed partial class LyricsService
 
     private sealed record CacheEntry(Lyrics Value, DateTimeOffset ExpiresAt);
 
-    private sealed record LrcLibTrack(
-        long Id,
-        string? TrackName,
-        string? ArtistName,
-        string? AlbumName,
-        double Duration,
-        bool Instrumental,
-        string? PlainLyrics,
-        string? SyncedLyrics);
+    private static readonly Regex TimeTagRegex = new(@"\[(\d{1,3}):(\d{1,2})(?:[.:](\d{1,3}))?\]", RegexOptions.CultureInvariant);
+    private static readonly Regex OffsetTagRegex = new(@"^\[offset:\s*([+-]?\d+)\s*\]$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex NoiseRegex = new(
+        @"\s*[\(\[][^\)\]]*(official|video|audio|lyric|lyrics|visualizer|mv|m/v|hd|4k|remaster(ed)?|live)[^\)\]]*[\)\]]",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex FeaturingRegex = new(@"\s+(ft\.?|feat\.?|featuring)\s+.*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex WhitespaceRegex = new(@"\s+", RegexOptions.CultureInvariant);
+
+    /// <summary>One result from the LRCLIB API (its JSON uses camelCase; matching is case-insensitive).</summary>
+    private sealed class LrcLibTrack
+    {
+        public long Id { get; set; }
+        public string? TrackName { get; set; }
+        public string? ArtistName { get; set; }
+        public string? AlbumName { get; set; }
+        public double Duration { get; set; }
+        public bool Instrumental { get; set; }
+        public string? PlainLyrics { get; set; }
+        public string? SyncedLyrics { get; set; }
+    }
 
     public void Seed(string title, string artist, Lyrics lyrics) =>
         _cache[Key(title, artist, "")] = new CacheEntry(lyrics, DateTimeOffset.MaxValue);
@@ -110,7 +117,7 @@ public sealed partial class LyricsService
                 continue;
             }
 
-            var offsetMatch = OffsetTag().Match(line);
+            var offsetMatch = OffsetTagRegex.Match(line);
             if (offsetMatch.Success)
             {
                 // Positive offset = lyrics appear earlier.
@@ -122,7 +129,7 @@ public sealed partial class LyricsService
             var index = 0;
             while (true)
             {
-                var m = TimeTag().Match(line, index);
+                var m = TimeTagRegex.Match(line, index);
                 if (!m.Success || m.Index != index)
                 {
                     break;
@@ -135,7 +142,7 @@ public sealed partial class LyricsService
                 {
                     1 => int.Parse(fraction, CultureInfo.InvariantCulture) * 100,
                     2 => int.Parse(fraction, CultureInfo.InvariantCulture) * 10,
-                    _ => int.Parse(fraction[..3], CultureInfo.InvariantCulture),
+                    _ => int.Parse(fraction.Substring(0, 3), CultureInfo.InvariantCulture),
                 };
                 stamps.Add(new TimeSpan(0, 0, minutes, seconds, ms));
                 index = m.Index + m.Length;
@@ -146,7 +153,7 @@ public sealed partial class LyricsService
                 continue; // Metadata such as [ar:...] or plain text.
             }
 
-            var text = line[index..].Trim();
+            var text = line.Substring(index).Trim();
             foreach (var stamp in stamps)
             {
                 var time = stamp + offset;
@@ -199,7 +206,13 @@ public sealed partial class LyricsService
         $"{NormalizeKeyPart(artist)}\u001f{NormalizeKeyPart(title)}\u001f{NormalizeKeyPart(album)}";
 
     private static string NormalizeKeyPart(string value) =>
-        Regex.Replace((value ?? "").Trim(), @"\s+", " ").ToUpperInvariant();
+        WhitespaceRegex.Replace((value ?? "").Trim(), " ").ToUpperInvariant();
+
+    /// <summary>Created on the first lookup, so Jer doesn't load the networking code while lyrics are off.</summary>
+    private static class Client
+    {
+        public static readonly HttpClient Http = CreateClient();
+    }
 
     private static HttpClient CreateClient()
     {
@@ -208,8 +221,7 @@ public sealed partial class LyricsService
             BaseAddress = new Uri("https://lrclib.net/"),
             Timeout = TimeSpan.FromSeconds(8),
         };
-        var version = typeof(LyricsService).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
-        client.DefaultRequestHeaders.UserAgent.ParseAdd($"Jer/{version} (+https://github.com/Ma-Biche/Jer)");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd($"Jer/{AppInfo.VersionText} (+https://github.com/Ma-Biche/Jer)");
         return client;
     }
 
@@ -276,7 +288,7 @@ public sealed partial class LyricsService
     {
         if (!string.IsNullOrWhiteSpace(track.SyncedLyrics))
         {
-            var lines = ParseLrc(track.SyncedLyrics);
+            var lines = ParseLrc(track.SyncedLyrics!);
             if (lines.Count > 0)
             {
                 return new Lyrics(lines, synced: true, instrumental: false);
@@ -305,7 +317,7 @@ public sealed partial class LyricsService
         {
             try
             {
-                var response = await Http.GetAsync(url, ct);
+                var response = await Client.Http.GetAsync(url, ct);
                 var code = (int)response.StatusCode;
                 if (attempt < 2 && code is 429 or 502 or 503 or 504)
                 {
@@ -336,7 +348,9 @@ public sealed partial class LyricsService
         }
 
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<LrcLibTrack>(Json, ct);
+        var body = await response.Content.ReadAsStringAsync();
+        ct.ThrowIfCancellationRequested();
+        return Json.Deserialize<LrcLibTrack?>(body);
     }
 
     private static async Task<IReadOnlyList<LrcLibTrack>> SearchAsync(string url, CancellationToken ct)
@@ -348,7 +362,9 @@ public sealed partial class LyricsService
         }
 
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<List<LrcLibTrack>>(Json, ct) ?? new List<LrcLibTrack>();
+        var body = await response.Content.ReadAsStringAsync();
+        ct.ThrowIfCancellationRequested();
+        return Json.Deserialize<List<LrcLibTrack>?>(body) ?? new List<LrcLibTrack>();
     }
 
     private static (string Track, string Artist) CleanUp(string title, string artist)
@@ -360,26 +376,14 @@ public sealed partial class LyricsService
         var dash = track.IndexOf(" - ", StringComparison.Ordinal);
         if (dash > 0)
         {
-            by = track[..dash];
-            track = track[(dash + 3)..];
+            by = track.Substring(0, dash);
+            track = track.Substring(dash + 3);
         }
 
-        track = Noise().Replace(track, "");
-        track = Featuring().Replace(track, "");
-        by = by.Replace(" - Topic", "", StringComparison.OrdinalIgnoreCase);
-        by = Regex.Replace(by, "VEVO$", "", RegexOptions.IgnoreCase);
+        track = NoiseRegex.Replace(track, "");
+        track = FeaturingRegex.Replace(track, "");
+        by = Regex.Replace(by, @"\s*-\s*Topic$", "", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        by = Regex.Replace(by, "VEVO$", "", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         return (track.Trim(' ', '-', '|'), by.Trim());
     }
-
-    [GeneratedRegex(@"\[(\d{1,3}):(\d{1,2})(?:[.:](\d{1,3}))?\]")]
-    private static partial Regex TimeTag();
-
-    [GeneratedRegex(@"^\[offset:\s*([+-]?\d+)\s*\]$", RegexOptions.IgnoreCase)]
-    private static partial Regex OffsetTag();
-
-    [GeneratedRegex(@"\s*[\(\[][^\)\]]*(official|video|audio|lyric|lyrics|visualizer|mv|m/v|hd|4k|remaster(ed)?|live)[^\)\]]*[\)\]]", RegexOptions.IgnoreCase)]
-    private static partial Regex Noise();
-
-    [GeneratedRegex(@"\s+(ft\.?|feat\.?|featuring)\s+.*$", RegexOptions.IgnoreCase)]
-    private static partial Regex Featuring();
 }

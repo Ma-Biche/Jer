@@ -264,7 +264,7 @@ public sealed class SystemWatcher : IDisposable
         var battery = PowerManager.BatteryStatus;
         var hasBattery = battery != BatteryStatus.NotPresent;
         var plugged = PowerManager.PowerSupplyStatus != PowerSupplyStatus.NotPresent;
-        var percent = hasBattery ? Math.Clamp(PowerManager.RemainingChargePercent, 0, 100) : 100;
+        var percent = hasBattery ? MathEx.Clamp(PowerManager.RemainingChargePercent, 0, 100) : 100;
         return new PowerState(hasBattery, plugged, percent, battery == BatteryStatus.Charging);
     }
 
