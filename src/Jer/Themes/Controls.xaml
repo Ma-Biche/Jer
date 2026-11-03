@@ -21,7 +21,7 @@
 
     <SolidColorBrush x:Key="Set.Background" Color="#FF1B1B1E"/>
     <SolidColorBrush x:Key="Set.Sidebar" Color="#FF141416"/>
-    <SolidColorBrush x:Key="Set.Card" Color="#FF242428"/>
+    <SolidColorBrush x:Key="Set.CardBrush" Color="#FF242428"/>
     <SolidColorBrush x:Key="Set.CardHover" Color="#FF2A2A2F"/>
     <SolidColorBrush x:Key="Set.Border" Color="#FF323238"/>
     <SolidColorBrush x:Key="Set.Text2" Color="#FFA9A9B2"/>
@@ -353,7 +353,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Bg" Background="{StaticResource Set.Card}" CornerRadius="8" Padding="14,10" Margin="0,0,0,6"
+                    <Border x:Name="Bg" Background="{StaticResource Set.CardBrush}" CornerRadius="8" Padding="14,10" Margin="0,0,0,6"
                             BorderThickness="1" BorderBrush="Transparent">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -416,7 +416,7 @@
     </Style>
 
     <Style x:Key="Set.Card" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource Set.Card}"/>
+        <Setter Property="Background" Value="{StaticResource Set.CardBrush}"/>
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="16,12"/>
         <Setter Property="Margin" Value="0,0,0,6"/>
