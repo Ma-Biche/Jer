@@ -51,13 +51,13 @@
                             <StackPanel IsItemsHost="True"/>
                         </DockPanel>
                     </Border>
-                    <ContentPresenter Grid.Column="1" ContentSource="SelectedContent"/>
+                    <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Column="1" ContentSource="SelectedContent"/>
                 </Grid>
             </ControlTemplate>
         </TabControl.Template>
 
         <!-- ================= General ================= -->
-        <TabItem x:Name="GeneralTab" Style="{StaticResource Set.NavItem}">
+        <TabItem x:Name="GeneralTab" Style="{StaticResource Set.NavItem}" AutomationProperties.Name="General">
             <TabItem.Header>
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource Icon.Settings}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
@@ -97,7 +97,7 @@
         </TabItem>
 
         <!-- ================= Display ================= -->
-        <TabItem x:Name="DisplayTab" Style="{StaticResource Set.NavItem}">
+        <TabItem x:Name="DisplayTab" Style="{StaticResource Set.NavItem}" AutomationProperties.Name="Display">
             <TabItem.Header>
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource Icon.Display}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
@@ -199,7 +199,7 @@
         </TabItem>
 
         <!-- ================= Pages ================= -->
-        <TabItem x:Name="PagesTab" Style="{StaticResource Set.NavItem}">
+        <TabItem x:Name="PagesTab" Style="{StaticResource Set.NavItem}" AutomationProperties.Name="Pages">
             <TabItem.Header>
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource Icon.Pages}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
@@ -234,7 +234,7 @@
         </TabItem>
 
         <!-- ================= Pomodoro ================= -->
-        <TabItem x:Name="PomodoroTab" Style="{StaticResource Set.NavItem}">
+        <TabItem x:Name="PomodoroTab" Style="{StaticResource Set.NavItem}" AutomationProperties.Name="Pomodoro">
             <TabItem.Header>
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource Icon.Timer}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
@@ -281,7 +281,7 @@
         </TabItem>
 
         <!-- ================= Water ================= -->
-        <TabItem x:Name="WaterTab" Style="{StaticResource Set.NavItem}">
+        <TabItem x:Name="WaterTab" Style="{StaticResource Set.NavItem}" AutomationProperties.Name="Water">
             <TabItem.Header>
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource Icon.Water}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
@@ -331,7 +331,7 @@
         </TabItem>
 
         <!-- ================= Alerts ================= -->
-        <TabItem x:Name="AlertsTab" Style="{StaticResource Set.NavItem}">
+        <TabItem x:Name="AlertsTab" Style="{StaticResource Set.NavItem}" AutomationProperties.Name="Alerts">
             <TabItem.Header>
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource Icon.Bell}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
@@ -365,7 +365,7 @@
         </TabItem>
 
         <!-- ================= About ================= -->
-        <TabItem x:Name="AboutTab" Style="{StaticResource Set.NavItem}">
+        <TabItem x:Name="AboutTab" Style="{StaticResource Set.NavItem}" AutomationProperties.Name="About">
             <TabItem.Header>
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource Icon.Info}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
