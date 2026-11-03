@@ -206,9 +206,9 @@ public sealed class MediaService : ObservableObject
             next = null;
         }
 
-        if (_session is not null && next is not null && _session.SourceAppUserModelId == next.SourceAppUserModelId)
+        if (ReferenceEquals(_session, next))
         {
-            return; // Same player; its own events keep us up to date.
+            return; // Same session; its own events keep us up to date.
         }
 
         if (_session is not null)
@@ -235,6 +235,9 @@ public sealed class MediaService : ObservableObject
         _ = RefreshPropertiesAsync(next);
     }
 
+    private bool IsCurrent(GlobalSystemMediaTransportControlsSession session) =>
+        _session is not null && (ReferenceEquals(session, _session) || session.SourceAppUserModelId == _session.SourceAppUserModelId);
+
     private void Clear()
     {
         _propertiesVersion++;
@@ -251,7 +254,7 @@ public sealed class MediaService : ObservableObject
 
     private async Task RefreshPropertiesAsync(GlobalSystemMediaTransportControlsSession session)
     {
-        if (!ReferenceEquals(session, _session) && _session?.SourceAppUserModelId != session.SourceAppUserModelId)
+        if (!IsCurrent(session))
         {
             return;
         }
@@ -306,7 +309,7 @@ public sealed class MediaService : ObservableObject
 
     private void RefreshPlayback(GlobalSystemMediaTransportControlsSession session)
     {
-        if (_session is null || session.SourceAppUserModelId != _session.SourceAppUserModelId)
+        if (!IsCurrent(session))
         {
             return;
         }
@@ -337,7 +340,7 @@ public sealed class MediaService : ObservableObject
 
     private void RefreshTimeline(GlobalSystemMediaTransportControlsSession session)
     {
-        if (_session is null || session.SourceAppUserModelId != _session.SourceAppUserModelId)
+        if (!IsCurrent(session))
         {
             return;
         }

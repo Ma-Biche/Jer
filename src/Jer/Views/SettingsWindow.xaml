@@ -158,7 +158,7 @@
                     </Border>
 
                     <TextBlock Text="Show the notch on" Style="{StaticResource Set.SectionTitle}"/>
-                    <RadioButton GroupName="NotchDisplay" Style="{StaticResource Set.Radio}" IsChecked="{Binding UsePrimary, Mode=TwoWay}">
+                    <RadioButton GroupName="NotchDisplay" Style="{StaticResource Set.Radio}" IsChecked="{Binding UsePrimary, Mode=TwoWay}" AutomationProperties.Name="Main display">
                         <StackPanel>
                             <TextBlock Text="Main display" FontSize="14"/>
                             <TextBlock Text="Follows whichever screen Windows uses as the main display." FontSize="12" Foreground="{StaticResource Set.Text2}" Margin="0,2,0,0"/>
@@ -167,7 +167,7 @@
                     <ItemsControl ItemsSource="{Binding Displays}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <RadioButton GroupName="NotchDisplay" Style="{StaticResource Set.Radio}" IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                <RadioButton GroupName="NotchDisplay" Style="{StaticResource Set.Radio}" IsChecked="{Binding IsSelected, Mode=TwoWay}" AutomationProperties.Name="{Binding Title}">
                                     <StackPanel>
                                         <TextBlock Text="{Binding Title}" FontSize="14"/>
                                         <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{StaticResource Set.Text2}" Margin="0,2,0,0"/>

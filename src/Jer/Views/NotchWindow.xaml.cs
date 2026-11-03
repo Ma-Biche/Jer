@@ -158,7 +158,12 @@ public partial class NotchWindow : Window
         _monitors.DisplaysChanged += (_, _) => ApplyPlacement();
 
         SourceInitialized += OnSourceInitialized;
-        DpiChanged += (_, _) => Dispatcher.BeginInvoke(ApplyPlacement, DispatcherPriority.Background);
+        // Moving to a display with another scale (or changing the scale) re-reads the displays and re-centres the notch.
+        DpiChanged += (_, _) => Dispatcher.BeginInvoke(() =>
+        {
+            _monitors.Refresh();
+            ApplyPlacement();
+        }, DispatcherPriority.Background);
         Loaded += (_, _) =>
         {
             // WPF applies its own initial size after SourceInitialized; place the notch again once it has.
