@@ -131,8 +131,6 @@ public sealed class SettingsViewModel : ObservableObject
         }
     }
 
-    public bool HasManyDisplays => Displays.Count > 1;
-
     public string DisplayNote { get; private set => SetProperty(ref field, value); } = "";
 
     public string NotchSizeText => $"{Math.Round(Settings.NotchScale * 100)}%";
@@ -228,7 +226,6 @@ public sealed class SettingsViewModel : ObservableObject
             });
         }
 
-        OnPropertyChanged(nameof(HasManyDisplays));
         SyncDisplaySelection();
     }
 

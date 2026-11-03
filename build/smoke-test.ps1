@@ -92,6 +92,9 @@ function Write-Diagnostics {
 
 $script:StartedAt = Get-Date
 try {
+# Show the desktop so screenshots have a clean background.
+(New-Object -ComObject Shell.Application).MinimizeAll()
+Start-Sleep -Seconds 1
 Move-Mouse ([int]($screen.Width / 2)) ([int]($screen.Height / 2))
 
 # 1. First run shows the welcome alert.
