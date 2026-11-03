@@ -100,11 +100,29 @@ function Select-Radio([string]$name) {
     $winCond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::NameProperty, "Jer Settings")
     $window = $root.FindFirst([System.Windows.Automation.TreeScope]::Children, $winCond)
     if (-not $window) { throw "Settings window not found" }
-    $radioCond = New-Object System.Windows.Automation.AndCondition(
-        (New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::RadioButton)),
-        (New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::NameProperty, $name)))
-    $radio = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $radioCond)
-    if (-not $radio) { throw "Radio '$name' not found" }
+    $radioCond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::RadioButton)
+    $radios = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, $radioCond)
+    $radio = $null
+    foreach ($r in $radios) {
+        $n = $r.Current.Name
+        Write-Host "  radio: '$n'"
+        if ($n -eq $name) { $radio = $r }
+    }
+    if (-not $radio) {
+        # Dump the first levels of the tree to see what UI Automation exposes.
+        $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
+        function Dump($el, $depth) {
+            if ($depth -gt 7) { return }
+            $c = $walker.GetFirstChild($el)
+            while ($c) {
+                Write-Host ((" " * ($depth * 2)) + $c.Current.ControlType.ProgrammaticName + " '" + $c.Current.Name + "'")
+                Dump $c ($depth + 1)
+                $c = $walker.GetNextSibling($c)
+            }
+        }
+        Dump $window 0
+        throw "Radio '$name' not found"
+    }
     $radio.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
     Write-Host "Selected '$name'"
 }
