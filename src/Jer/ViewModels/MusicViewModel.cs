@@ -46,6 +46,7 @@ public sealed class MusicViewModel : ObservableObject
     private readonly DispatcherTimer _ticker = new(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(200) };
     private readonly Debouncer _lyricsDebounce = new(TimeSpan.FromMilliseconds(450));
     private CancellationTokenSource? _lyricsCts;
+    private int _trackRevision;
     private Lyrics _current = Lyrics.None;
     private string _loadedKey = "";
     private bool _viewNeedsProgress;
@@ -182,9 +183,15 @@ public sealed class MusicViewModel : ObservableObject
         else if (e.PropertyName == nameof(MediaService.Duration))
         {
             Tick();
-            if (LyricsEnabled && LyricsStatus is LyricsStatus.NotFound or LyricsStatus.Waiting)
+
+            // Spotify can publish the track before its final duration. Replace a lookup
+            // made with incomplete metadata instead of keeping its possibly wrong result.
+            if (LyricsEnabled && Media.HasSession &&
+                LyricsStatus is LyricsStatus.Loading or LyricsStatus.Waiting or LyricsStatus.NotFound)
             {
+                _lyricsCts?.Cancel();
                 _loadedKey = "";
+                LyricsStatus = LyricsStatus.Waiting;
                 ScheduleLyrics();
             }
         }
@@ -198,15 +205,19 @@ public sealed class MusicViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(LyricsEnabled));
+
+        // Invalidate every in-flight lookup when the feature is switched.
+        _trackRevision++;
+        _lyricsCts?.Cancel();
+        _loadedKey = "";
+
         if (LyricsEnabled)
         {
             LyricsStatus = LyricsStatus.Waiting;
-            _loadedKey = "";
             ScheduleLyrics();
         }
         else
         {
-            _lyricsCts?.Cancel();
             LyricsStatus = LyricsStatus.Off;
             SetLyrics(Lyrics.None);
         }
@@ -217,12 +228,24 @@ public sealed class MusicViewModel : ObservableObject
 
     private void OnTrackChanged()
     {
+        // Invalidate the previous song immediately, before the debounce delay.
+        _trackRevision++;
+        _lyricsCts?.Cancel();
+        _loadedKey = "";
+
         SetLyrics(Lyrics.None);
         Tick();
-        if (LyricsEnabled)
+
+        if (LyricsEnabled && Media.HasSession && !string.IsNullOrWhiteSpace(Media.Title))
         {
-            LyricsStatus = Media.HasSession ? LyricsStatus.Waiting : LyricsStatus.Off;
+            LyricsStatus = LyricsStatus.Waiting;
             ScheduleLyrics();
+        }
+        else
+        {
+            LyricsStatus = LyricsEnabled && Media.HasSession
+                ? LyricsStatus.Waiting
+                : LyricsStatus.Off;
         }
 
         OnPropertyChanged(nameof(ShowLyricPill));
@@ -237,29 +260,60 @@ public sealed class MusicViewModel : ObservableObject
             return;
         }
 
-        var key = $"{Media.Artist}\u001f{Media.Title}";
+        // Capture a single track snapshot. Media metadata can update while HTTP is pending.
+        var revision = _trackRevision;
+        var title = Media.Title;
+        var artist = Media.Artist;
+        var album = Media.Album;
+        var duration = Media.Duration;
+        var key = $"{artist}\u001f{title}\u001f{album}";
+
         if (key == _loadedKey)
         {
             return;
         }
 
         _lyricsCts?.Cancel();
-        var cts = _lyricsCts = new CancellationTokenSource();
+        var cts = new CancellationTokenSource();
+        _lyricsCts = cts;
         LyricsStatus = LyricsStatus.Loading;
         LyricsMessage = "Looking for lyrics…";
+
         try
         {
-            var result = await _lyrics.GetAsync(Media.Title, Media.Artist, Media.Album, Media.Duration, cts.Token);
-            if (cts.IsCancellationRequested || key != $"{Media.Artist}\u001f{Media.Title}")
+            var result = await _lyrics.GetAsync(title, artist, album, duration, cts.Token);
+            var currentKey = $"{Media.Artist}\u001f{Media.Title}\u001f{Media.Album}";
+
+            // A late response from a skipped track must never overwrite the new track.
+            if (cts.IsCancellationRequested ||
+                !ReferenceEquals(_lyricsCts, cts) ||
+                revision != _trackRevision ||
+                !LyricsEnabled ||
+                key != currentKey)
             {
                 return;
             }
 
-            _loadedKey = key;
+            // Missing results remain retryable after metadata changes or the short cache TTL.
+            if (!result.IsEmpty)
+            {
+                _loadedKey = key;
+            }
+
             SetLyrics(result);
         }
         catch (OperationCanceledException)
         {
+            // Expected when the user skips tracks or disables lyrics.
+        }
+        finally
+        {
+            if (ReferenceEquals(_lyricsCts, cts))
+            {
+                _lyricsCts = null;
+            }
+
+            cts.Dispose();
         }
     }
 

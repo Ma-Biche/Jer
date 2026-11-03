@@ -21,7 +21,7 @@ public sealed class PomodoroViewModel : ObservableObject
     private readonly AppSettings _settings;
     private readonly SoundService _sound;
     private readonly NotchEvents _events;
-    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(250) };
+    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(1) };
     private DateTime _endsAt;
 
     public PomodoroViewModel(AppSettings settings, SoundService sound, NotchEvents events)

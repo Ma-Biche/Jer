@@ -218,12 +218,22 @@ public sealed class MediaService : ObservableObject
             _session.TimelinePropertiesChanged -= _onTimeline;
         }
 
+        // Invalidate reads started by the previous session before attaching the new one.
+        _propertiesVersion++;
         _session = next;
         if (next is null)
         {
             Clear();
             return;
         }
+
+        Title = Artist = Album = "";
+        Artwork = null;
+        Accent = Colors.White;
+        Duration = TimeSpan.Zero;
+        _positionAtUpdate = TimeSpan.Zero;
+        _positionUpdatedAt = DateTimeOffset.Now;
+        TrackChanged?.Invoke(this, EventArgs.Empty);
 
         next.MediaPropertiesChanged += _onProperties;
         next.PlaybackInfoChanged += _onPlayback;
@@ -236,7 +246,7 @@ public sealed class MediaService : ObservableObject
     }
 
     private bool IsCurrent(GlobalSystemMediaTransportControlsSession session) =>
-        _session is not null && (ReferenceEquals(session, _session) || session.SourceAppUserModelId == _session.SourceAppUserModelId);
+        _session is not null && ReferenceEquals(session, _session);
 
     private void Clear()
     {
@@ -271,7 +281,7 @@ public sealed class MediaService : ObservableObject
             return;
         }
 
-        if (version != _propertiesVersion || props is null)
+        if (version != _propertiesVersion || !IsCurrent(session) || props is null)
         {
             return;
         }
@@ -279,10 +289,26 @@ public sealed class MediaService : ObservableObject
         var title = props.Title?.Trim() ?? "";
         var artist = props.Artist?.Trim() ?? "";
         var album = props.AlbumTitle?.Trim() ?? "";
-        var trackChanged = title != Title || artist != Artist;
+        var trackChanged = title != Title || artist != Artist || album != Album;
         Title = title;
         Artist = artist;
         Album = album;
+
+        // Start lyric lookup as soon as the new metadata is available; do not make it
+        // wait for album-art stream decoding.
+        if (trackChanged)
+        {
+            Artwork = null;
+            Accent = Colors.White;
+            TrackChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        // Repeated SMTC metadata notifications for the same track should not decode
+        // the same artwork or recalculate its accent color again.
+        if (!trackChanged && Artwork is not null)
+        {
+            return;
+        }
 
         BitmapSource? art = null;
         try
@@ -294,17 +320,13 @@ public sealed class MediaService : ObservableObject
             Log.Warn("Could not load album art", ex);
         }
 
-        if (version != _propertiesVersion)
+        if (version != _propertiesVersion || !IsCurrent(session))
         {
             return;
         }
 
         Artwork = art;
         Accent = art is null ? Colors.White : ComputeAccent(art);
-        if (trackChanged)
-        {
-            TrackChanged?.Invoke(this, EventArgs.Empty);
-        }
     }
 
     private void RefreshPlayback(GlobalSystemMediaTransportControlsSession session)

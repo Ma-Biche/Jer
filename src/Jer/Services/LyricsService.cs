@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -40,7 +41,12 @@ public sealed partial class LyricsService
 {
     private static readonly HttpClient Http = CreateClient();
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
-    private readonly Dictionary<string, Lyrics> _cache = new(StringComparer.OrdinalIgnoreCase);
+    // Successful results live for the app session. Misses expire quickly so a temporary
+    // LRCLIB outage or late Spotify metadata cannot poison the cache.
+    private readonly ConcurrentDictionary<string, CacheEntry> _cache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly TimeSpan MissingCacheLifetime = TimeSpan.FromSeconds(30);
+
+    private sealed record CacheEntry(Lyrics Value, DateTimeOffset ExpiresAt);
 
     private sealed record LrcLibTrack(
         long Id,
@@ -52,7 +58,8 @@ public sealed partial class LyricsService
         string? PlainLyrics,
         string? SyncedLyrics);
 
-    public void Seed(string title, string artist, Lyrics lyrics) => _cache[Key(title, artist)] = lyrics;
+    public void Seed(string title, string artist, Lyrics lyrics) =>
+        _cache[Key(title, artist, "")] = new CacheEntry(lyrics, DateTimeOffset.MaxValue);
 
     public async Task<Lyrics> GetAsync(string title, string artist, string album, TimeSpan duration, CancellationToken ct)
     {
@@ -61,8 +68,9 @@ public sealed partial class LyricsService
             return Lyrics.None;
         }
 
-        var key = Key(title, artist);
-        if (_cache.TryGetValue(key, out var cached))
+        var key = Key(title, artist, album);
+        if (TryGetCached(key, out var cached) ||
+            TryGetCached(Key(title, artist, ""), out cached))
         {
             return cached;
         }
@@ -82,7 +90,10 @@ public sealed partial class LyricsService
             return Lyrics.None; // Not cached: a network hiccup shouldn't hide lyrics for the whole session.
         }
 
-        _cache[key] = result;
+        var expiry = result.IsEmpty
+            ? DateTimeOffset.UtcNow.Add(MissingCacheLifetime)
+            : DateTimeOffset.MaxValue;
+        _cache[key] = new CacheEntry(result, expiry);
         return result;
     }
 
@@ -167,14 +178,35 @@ public sealed partial class LyricsService
         return found;
     }
 
-    private static string Key(string title, string artist) => $"{artist.Trim()}\u001f{title.Trim()}";
+    private bool TryGetCached(string key, out Lyrics lyrics)
+    {
+        if (_cache.TryGetValue(key, out var entry))
+        {
+            if (entry.ExpiresAt > DateTimeOffset.UtcNow)
+            {
+                lyrics = entry.Value;
+                return true;
+            }
+
+            _cache.TryRemove(key, out _);
+        }
+
+        lyrics = Lyrics.None;
+        return false;
+    }
+
+    private static string Key(string title, string artist, string album) =>
+        $"{NormalizeKeyPart(artist)}\u001f{NormalizeKeyPart(title)}\u001f{NormalizeKeyPart(album)}";
+
+    private static string NormalizeKeyPart(string value) =>
+        Regex.Replace((value ?? "").Trim(), @"\s+", " ").ToUpperInvariant();
 
     private static HttpClient CreateClient()
     {
         var client = new HttpClient
         {
             BaseAddress = new Uri("https://lrclib.net/"),
-            Timeout = TimeSpan.FromSeconds(12),
+            Timeout = TimeSpan.FromSeconds(8),
         };
         var version = typeof(LyricsService).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
         client.DefaultRequestHeaders.UserAgent.ParseAdd($"Jer/{version} (+https://github.com/Ma-Biche/Jer)");
@@ -230,9 +262,10 @@ public sealed partial class LyricsService
             : r.Instrumental || !string.IsNullOrWhiteSpace(r.PlainLyrics));
         if (duration > TimeSpan.Zero)
         {
+            var tolerance = Math.Max(8.0, duration.TotalSeconds * 0.03);
             return candidates
-                .Where(r => r.Duration <= 0 || Math.Abs(r.Duration - duration.TotalSeconds) <= 4)
-                .OrderBy(r => r.Duration <= 0 ? 99 : Math.Abs(r.Duration - duration.TotalSeconds))
+                .Where(r => r.Duration <= 0 || Math.Abs(r.Duration - duration.TotalSeconds) <= tolerance)
+                .OrderBy(r => r.Duration <= 0 ? double.MaxValue : Math.Abs(r.Duration - duration.TotalSeconds))
                 .FirstOrDefault();
         }
 
