@@ -32,8 +32,8 @@ Write-Host "Screen: $($screen.Width) x $($screen.Height)"
 function Save-Shot([string]$name) {
     $bmp = New-Object System.Drawing.Bitmap $screen.Width, $screen.Height
     $g = [System.Drawing.Graphics]::FromImage($bmp)
-    $op = [System.Drawing.CopyPixelOperation]::SourceCopy -bor [System.Drawing.CopyPixelOperation]::CaptureBlt
-    $g.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size, $op)
+    # With desktop composition the screen copy includes layered (transparent) windows such as the notch.
+    $g.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size, [System.Drawing.CopyPixelOperation]::SourceCopy)
     $bmp.Save((Join-Path $OutDir "$name.png"), [System.Drawing.Imaging.ImageFormat]::Png)
     $g.Dispose()
     $bmp.Dispose()
