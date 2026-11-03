@@ -33,14 +33,14 @@ Inspired by [Nusa](https://rama2555.github.io/nusa/). Jer is an independent app 
 
 ## Download
 
-Every pull request and every push to `main` builds `Jer.exe` on GitHub Actions (open the run under **Actions → Build**, then **Artifacts**; you need to be signed in to GitHub):
+Get the latest version from **[Releases](https://github.com/Ma-Biche/Jer/releases/latest)** (no GitHub account needed):
 
-- `Jer-win-x64`: most PCs
-- `Jer-win-arm64`: Windows on ARM (Snapdragon)
+- `Jer-win-x64.zip`: most PCs
+- `Jer-win-arm64.zip`: Windows on ARM (Snapdragon)
 
-Tagging a version (`git tag v1.0.0 && git push --tags`) also publishes a GitHub Release with both zips.
+Extract the zip and run `Jer.exe`. It is self-contained: no installer and no .NET install needed. Requires Windows 10 1809 or later, or Windows 11 (64-bit). Windows SmartScreen may warn about a new unsigned app; choose **More info → Run anyway**. Each release includes `SHA256SUMS.txt` so you can check your download.
 
-`Jer.exe` is self-contained: no installer and no .NET install needed. Requires Windows 10 1809 or later, or Windows 11 (64-bit). Windows SmartScreen may warn about a new unsigned app; choose **More info → Run anyway**.
+Test builds of every pull request and every push to `main` are under **Actions → Build → Artifacts** (sign-in required). Pushing a tag such as `v1.0.1` builds, tests and publishes a new release.
 
 ## Using Jer
 
@@ -88,4 +88,8 @@ src/Jer
 
 ## Ringkasan (Bahasa Indonesia)
 
-Jer adalah notch untuk Windows: musik, lirik tersinkron, Pomodoro, pengingat minum, Shelf untuk file, dan to-do, langsung di bagian atas layar. Buka **Settings** lewat ikon Jer di tray (dekat jam). Di **Settings → Display** kamu bisa memindahkan notch ke layar utama atau ke layar kedua (atau layar lain), lengkap dengan peta layar dan tombol *Identify*. Pilihan yang sama ada di menu tray: *Show notch on*. Unduh `Jer.exe` dari tab **Actions** (artifact `Jer-win-x64`).
+Jer adalah notch untuk Windows: musik, lirik tersinkron, Pomodoro, pengingat minum, Shelf untuk file, dan to-do, langsung di bagian atas layar. Buka **Settings** lewat ikon Jer di tray (dekat jam). Di **Settings → Display** kamu bisa memindahkan notch ke layar utama atau ke layar kedua (atau layar lain), lengkap dengan peta layar dan tombol *Identify*. Pilihan yang sama ada di menu tray: *Show notch on*. Unduh versi terbaru di **[Releases](https://github.com/Ma-Biche/Jer/releases/latest)** (tanpa login): ambil `Jer-win-x64.zip`, ekstrak, lalu jalankan `Jer.exe`.
+
+## License
+
+[MIT](LICENSE) © 2026 Ma-Biche

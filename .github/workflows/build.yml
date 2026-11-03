@@ -41,6 +41,13 @@ jobs:
         run: |
           Compress-Archive -Path publish/win-x64/Jer.exe -DestinationPath Jer-win-x64.zip
           Compress-Archive -Path publish/win-arm64/Jer.exe -DestinationPath Jer-win-arm64.zip
+          $files = 'Jer-win-x64.zip', 'Jer-win-arm64.zip', 'publish/win-x64/Jer.exe', 'publish/win-arm64/Jer.exe'
+          $lines = foreach ($file in $files) {
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($file -replace '^publish/', '')"
+          }
+          $lines | Set-Content -Path SHA256SUMS.txt -Encoding ascii
+          Get-Content SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v7
         with:
@@ -62,6 +69,22 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v3
         with:
+          name: Jer ${{ github.ref_name }}
+          fail_on_unmatched_files: true
+          make_latest: "true"
           files: |
             Jer-win-x64.zip
             Jer-win-arm64.zip
+            SHA256SUMS.txt
+          body: |
+            Jer ${{ github.ref_name }}, a living notch for Windows 10 (1809 or later) and Windows 11, 64-bit.
+
+            **Download**
+            - `Jer-win-x64.zip` for most PCs
+            - `Jer-win-arm64.zip` for Windows on ARM (Snapdragon)
+
+            Extract the zip and run `Jer.exe`. No installer and no .NET install needed. Windows SmartScreen may warn because the app is new and not signed: choose **More info → Run anyway**. `SHA256SUMS.txt` lists the SHA-256 of every file so you can check your download.
+
+            **Unduh (Bahasa Indonesia)**: ambil `Jer-win-x64.zip`, ekstrak, lalu jalankan `Jer.exe`. Kalau muncul peringatan SmartScreen, pilih **More info → Run anyway**.
+
+            Settings: click the Jer icon next to the clock. Move the notch to another display in **Settings → Display** or from the tray menu under **Show notch on**.

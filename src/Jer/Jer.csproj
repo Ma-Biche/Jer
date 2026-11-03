@@ -21,6 +21,8 @@
     <Product>Jer</Product>
     <Title>Jer</Title>
     <Description>A living notch for Windows</Description>
+    <Authors>Ma-Biche</Authors>
+    <Copyright>Copyright (c) 2026 Ma-Biche. MIT License.</Copyright>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- WPF reads DPI awareness from app.manifest; the WinForms hint does not apply here. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
