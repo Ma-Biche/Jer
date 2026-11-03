@@ -2,7 +2,8 @@
 
   <!-- Test helper for CI: shows up in the Windows media controls like a music app, without playing audio. -->
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <!-- A console app so it can read commands from stdin (the test starts it without a console window). -->
+    <OutputType>Exe</OutputType>
     <TargetFramework>net48</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
