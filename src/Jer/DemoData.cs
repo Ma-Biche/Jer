@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Jer.Core;
 using Jer.Services;
 using Jer.ViewModels;
 
@@ -47,7 +48,7 @@ internal static class DemoData
 
         vm.Water.AddDemoEntries();
 
-        if (Environment.ProcessPath is { } exe)
+        if (AppInfo.ExecutablePath is { Length: > 0 } exe)
         {
             vm.Shelf.AddPaths(new[] { exe, Path.GetDirectoryName(exe)! });
         }

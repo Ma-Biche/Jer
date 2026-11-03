@@ -1,19 +1,13 @@
 using System;
 using System.IO;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Text;
 
 namespace Jer.Core;
 
 /// <summary>Reads and writes Jer's JSON files in %APPDATA%\Jer. Writes are atomic.</summary>
 public static class JsonStore
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        WriteIndented = true,
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() },
-    };
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
     public static string DataDirectory { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jer");
@@ -28,7 +22,7 @@ public static class JsonStore
         {
             if (File.Exists(path))
             {
-                return JsonSerializer.Deserialize<T>(File.ReadAllText(path), Options) ?? new T();
+                return Json.Deserialize<T>(File.ReadAllText(path, Encoding.UTF8)) ?? new T();
             }
         }
         catch (Exception ex)
@@ -59,8 +53,8 @@ public static class JsonStore
             Directory.CreateDirectory(DataDirectory);
             var path = Path.Combine(DataDirectory, fileName);
             var temp = path + ".tmp";
-            File.WriteAllText(temp, JsonSerializer.Serialize(value, Options));
-            File.Move(temp, path, overwrite: true);
+            File.WriteAllText(temp, Json.Serialize(value), Utf8NoBom);
+            FileUtil.MoveOverwrite(temp, path);
         }
         catch (Exception ex)
         {

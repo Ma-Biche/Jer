@@ -119,7 +119,7 @@ public sealed class WaterViewModel : ObservableObject
         var entries = TodayEntries().ToList();
         TodayMl = entries.Sum(e => e.Ml);
         var goal = Math.Max(1, _settings.WaterGoalMl);
-        Progress = Math.Clamp(TodayMl / (double)goal, 0, 1);
+        Progress = MathEx.Clamp(TodayMl / (double)goal, 0, 1);
         AmountText = Ui.FormatLitres(TodayMl);
         GoalText = "of " + Ui.FormatLitres(goal);
         var percent = (int)Math.Round(TodayMl * 100.0 / goal);

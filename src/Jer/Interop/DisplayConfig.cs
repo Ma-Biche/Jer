@@ -190,7 +190,10 @@ internal static class DisplayConfig
                     var friendly = string.IsNullOrWhiteSpace(target.monitorFriendlyDeviceName)
                         ? (isInternal ? "Built-in display" : "Display")
                         : target.monitorFriendlyDeviceName.Trim();
-                    result.TryAdd(source.viewGdiDeviceName, new MonitorName(friendly, target.monitorDevicePath ?? "", isInternal));
+                    if (!result.ContainsKey(source.viewGdiDeviceName))
+                    {
+                        result[source.viewGdiDeviceName] = new MonitorName(friendly, target.monitorDevicePath ?? "", isInternal);
+                    }
                 }
 
                 return result;

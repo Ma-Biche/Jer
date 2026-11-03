@@ -59,11 +59,14 @@ public sealed class AppSettings : ObservableObject
     // Internal
     public bool FirstRunDone { get; set => SetProperty(ref field, value); }
 
+    /// <summary>The version that ran last; a different value means Jer was just updated.</summary>
+    public string? LastVersion { get; set => SetProperty(ref field, value); }
+
     /// <summary>Clamps values that may have been hand-edited in settings.json.</summary>
     public void Normalize()
     {
-        MascotDelaySeconds = Math.Clamp(MascotDelaySeconds, 10, 600);
-        NotchScale = Math.Round(Math.Clamp(NotchScale, 0.8, 1.4), 2);
+        MascotDelaySeconds = MathEx.Clamp(MascotDelaySeconds, 10, 600);
+        NotchScale = Math.Round(MathEx.Clamp(NotchScale, 0.8, 1.4), 2);
         if (string.IsNullOrWhiteSpace(DisplayTarget))
         {
             DisplayTarget = PrimaryDisplay;
@@ -74,15 +77,15 @@ public sealed class AppSettings : ObservableObject
             MusicPage = true;
         }
 
-        FocusMinutes = Math.Clamp(FocusMinutes, 1, 180);
-        ShortBreakMinutes = Math.Clamp(ShortBreakMinutes, 1, 60);
-        LongBreakMinutes = Math.Clamp(LongBreakMinutes, 1, 120);
-        LongBreakEvery = Math.Clamp(LongBreakEvery, 2, 12);
-        WaterGoalMl = Math.Clamp(WaterGoalMl, 250, 8000);
-        WaterCupMl = Math.Clamp(WaterCupMl, 50, 2000);
-        WaterIntervalMinutes = Math.Clamp(WaterIntervalMinutes, 10, 360);
-        WaterStartHour = Math.Clamp(WaterStartHour, 0, 23);
-        WaterEndHour = Math.Clamp(WaterEndHour, 0, 23);
+        FocusMinutes = MathEx.Clamp(FocusMinutes, 1, 180);
+        ShortBreakMinutes = MathEx.Clamp(ShortBreakMinutes, 1, 60);
+        LongBreakMinutes = MathEx.Clamp(LongBreakMinutes, 1, 120);
+        LongBreakEvery = MathEx.Clamp(LongBreakEvery, 2, 12);
+        WaterGoalMl = MathEx.Clamp(WaterGoalMl, 250, 8000);
+        WaterCupMl = MathEx.Clamp(WaterCupMl, 50, 2000);
+        WaterIntervalMinutes = MathEx.Clamp(WaterIntervalMinutes, 10, 360);
+        WaterStartHour = MathEx.Clamp(WaterStartHour, 0, 23);
+        WaterEndHour = MathEx.Clamp(WaterEndHour, 0, 23);
         if (WaterEndHour <= WaterStartHour)
         {
             WaterEndHour = Math.Min(23, WaterStartHour + 1);

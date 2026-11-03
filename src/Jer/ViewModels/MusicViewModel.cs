@@ -129,7 +129,7 @@ public sealed class MusicViewModel : ObservableObject
         get;
         set
         {
-            value = Math.Clamp(value, 0, 100);
+            value = MathEx.Clamp(value, 0, 100);
             if (SetProperty(ref field, value) && !_updatingVolume)
             {
                 _volume?.SetLevel((float)(value / 100.0));
@@ -161,7 +161,7 @@ public sealed class MusicViewModel : ObservableObject
             return;
         }
 
-        _ = Media.SeekAsync(TimeSpan.FromTicks((long)(Media.Duration.Ticks * Math.Clamp(fraction, 0, 1))));
+        _ = Media.SeekAsync(TimeSpan.FromTicks((long)(Media.Duration.Ticks * MathEx.Clamp(fraction, 0, 1))));
     }
 
     /// <summary>Shows demo lyrics without a network lookup (--demo).</summary>

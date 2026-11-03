@@ -68,7 +68,7 @@ public sealed class VolumeService : IDisposable
 
     public void SetLevel(float level)
     {
-        level = Math.Clamp(level, 0f, 1f);
+        level = MathEx.Clamp(level, 0f, 1f);
         if (_endpoint is null)
         {
             return;

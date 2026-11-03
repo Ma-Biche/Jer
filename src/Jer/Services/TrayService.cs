@@ -74,7 +74,7 @@ public sealed class TrayService : IDisposable
 
         _icon = new NotifyIcon
         {
-            Text = "Jer",
+            Text = "Jer " + AppInfo.VersionText,
             ContextMenuStrip = _menu,
             Visible = false,
         };

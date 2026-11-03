@@ -1019,7 +1019,7 @@ public partial class NotchWindow : Window
         var typeface = new Typeface(LyricText.FontFamily, LyricText.FontStyle, FontWeights.SemiBold, LyricText.FontStretch);
         var measured = new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, typeface, LyricText.FontSize,
             Brushes.White, VisualTreeHelper.GetDpi(this).PixelsPerDip).WidthIncludingTrailingWhitespace;
-        var width = Math.Clamp(measured + 28 + 19 + 4, 120, 640);
+        var width = MathEx.Clamp(measured + 28 + 19 + 4, 120, 640);
 
         if (!animate)
         {
@@ -1051,7 +1051,7 @@ public partial class NotchWindow : Window
         }
 
         var top = line.TransformToAncestor(LyricsScroller).Transform(new Point(0, 0)).Y;
-        var target = Math.Clamp(LyricsScroller.VerticalOffset + top - (LyricsScroller.ViewportHeight - line.ActualHeight) / 2, 0, LyricsScroller.ScrollableHeight);
+        var target = MathEx.Clamp(LyricsScroller.VerticalOffset + top - (LyricsScroller.ViewportHeight - line.ActualHeight) / 2, 0, LyricsScroller.ScrollableHeight);
         if (animate)
         {
             SmoothScroll(LyricsScroller, target);
@@ -1096,7 +1096,7 @@ public partial class NotchWindow : Window
         if (hasLevel)
         {
             HudLevel.Text = _vm.HudLevelText;
-            HudBarFill.BeginAnimation(WidthProperty, new DoubleAnimation(104 * Math.Clamp(hud.Level!.Value, 0, 1), TimeSpan.FromMilliseconds(140)));
+            HudBarFill.BeginAnimation(WidthProperty, new DoubleAnimation(104 * MathEx.Clamp(hud.Level!.Value, 0, 1), TimeSpan.FromMilliseconds(140)));
         }
     }
 

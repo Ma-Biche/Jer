@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -111,7 +112,7 @@ public sealed class MediaService : ObservableObject
     {
         if (Duration > TimeSpan.Zero)
         {
-            position = TimeSpan.FromTicks(Math.Clamp(position.Ticks, 0, Duration.Ticks));
+            position = TimeSpan.FromTicks(MathEx.Clamp(position.Ticks, 0, Duration.Ticks));
         }
 
         // Move the local clock right away so the UI doesn't snap back while the player catches up.
@@ -206,7 +207,7 @@ public sealed class MediaService : ObservableObject
             next = null;
         }
 
-        if (ReferenceEquals(_session, next))
+        if (SameSession(_session, next))
         {
             return; // Same session; its own events keep us up to date.
         }
@@ -246,7 +247,49 @@ public sealed class MediaService : ObservableObject
     }
 
     private bool IsCurrent(GlobalSystemMediaTransportControlsSession session) =>
-        _session is not null && ReferenceEquals(session, _session);
+        _session is not null && SameSession(session, _session);
+
+    /// <summary>
+    /// True when both wrappers point at the same Windows media session. Windows can hand out a second
+    /// wrapper for the same session (in event callbacks, for example), so this compares COM identity.
+    /// Two browser tabs share an app id, so the app id alone isn't enough.
+    /// </summary>
+    private static bool SameSession(GlobalSystemMediaTransportControlsSession? a, GlobalSystemMediaTransportControlsSession? b)
+    {
+        if (ReferenceEquals(a, b))
+        {
+            return true;
+        }
+
+        if (a is null || b is null)
+        {
+            return false;
+        }
+
+        IntPtr left = IntPtr.Zero, right = IntPtr.Zero;
+        try
+        {
+            left = Marshal.GetIUnknownForObject(a);
+            right = Marshal.GetIUnknownForObject(b);
+            return left == right;
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidCastException or COMException)
+        {
+            return false;
+        }
+        finally
+        {
+            if (left != IntPtr.Zero)
+            {
+                Marshal.Release(left);
+            }
+
+            if (right != IntPtr.Zero)
+            {
+                Marshal.Release(right);
+            }
+        }
+    }
 
     private void Clear()
     {
@@ -458,9 +501,9 @@ public sealed class MediaService : ObservableObject
 
             var boost = 230 / top;
             return Color.FromRgb(
-                (byte)Math.Clamp(r * boost, 0, 255),
-                (byte)Math.Clamp(g * boost, 0, 255),
-                (byte)Math.Clamp(b * boost, 0, 255));
+                (byte)MathEx.Clamp(r * boost, 0, 255),
+                (byte)MathEx.Clamp(g * boost, 0, 255),
+                (byte)MathEx.Clamp(b * boost, 0, 255));
         }
         catch
         {
@@ -475,7 +518,7 @@ public sealed class MediaService : ObservableObject
             return "";
         }
 
-        var id = appId.ToLowerInvariant();
+        var id = appId!.ToLowerInvariant();
         if (id.Contains("spotify")) return "Spotify";
         if (id.Contains("applemusic") || id.Contains("apple music")) return "Apple Music";
         if (id.Contains("zunemusic") || id.Contains("mediaplayer")) return "Media Player";
@@ -495,26 +538,26 @@ public sealed class MediaService : ObservableObject
         var bang = name.IndexOf('!');
         if (bang > 0)
         {
-            name = name[..bang];
+            name = name.Substring(0, bang);
         }
 
         var underscore = name.IndexOf('_');
         if (underscore > 0)
         {
-            name = name[..underscore];
+            name = name.Substring(0, underscore);
         }
 
         if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
         {
-            name = name[..^4];
+            name = name.Substring(0, name.Length - 4);
         }
 
         var dot = name.LastIndexOf('.');
         if (dot >= 0 && dot < name.Length - 1)
         {
-            name = name[(dot + 1)..];
+            name = name.Substring(dot + 1);
         }
 
-        return name.Length > 0 ? char.ToUpperInvariant(name[0]) + name[1..] : "";
+        return name.Length > 0 ? char.ToUpperInvariant(name[0]) + name.Substring(1) : "";
     }
 }

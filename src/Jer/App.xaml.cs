@@ -18,14 +18,11 @@ namespace Jer;
 
 public partial class App : Application
 {
-    private const string MutexName = @"Local\Jer.SingleInstance.7f3c2a9e";
-    private const string ShowSettingsEventName = @"Local\Jer.ShowSettings.7f3c2a9e";
     private const string SettingsFile = "settings.json";
 
     private readonly NotchEvents _events = new();
-    private Mutex? _mutex;
-    private EventWaitHandle? _showSettingsEvent;
-    private RegisteredWaitHandle? _showSettingsWait;
+    private SingleInstance? _instance;
+    private Version? _replacedVersion;
     private AppSettings _settings = new();
     private Debouncer? _saveSettings;
     private MonitorService _monitors = new();
@@ -44,27 +41,29 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += (_, e) => Log.Error("Unhandled exception", e.ExceptionObject as Exception);
     }
 
-    [DllImport("user32.dll")]
-    private static extern bool AllowSetForegroundWindow(int dwProcessId);
-
     protected override void OnStartup(StartupEventArgs e)
     {
         var args = e.Args.Select(a => a.Trim()).ToArray();
-        _mutex = new Mutex(initiallyOwned: true, MutexName, out var firstInstance);
-        _showSettingsEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowSettingsEventName);
-        if (!firstInstance)
+        _instance = SingleInstance.Acquire(quietIfRunning: args.Contains("--startup", StringComparer.OrdinalIgnoreCase), out var instance);
+        switch (instance)
         {
-            // Jer is already running: opening it again shows its Settings.
-            if (!args.Contains("--startup", StringComparer.OrdinalIgnoreCase))
-            {
-                AllowSetForegroundWindow(-1);
-                _showSettingsEvent.Set();
-            }
-
-            _mutex.Dispose();
-            _mutex = null;
-            Shutdown();
-            return;
+            case InstanceResult.HandedOff:
+                // Jer is already running: opening it again shows its Settings.
+                _instance.Dispose();
+                _instance = null;
+                Shutdown();
+                return;
+            case InstanceResult.Blocked:
+                _instance.Dispose();
+                _instance = null;
+                MessageBox.Show(
+                    "Another copy of Jer is running and couldn't be closed.\n\nRight-click the Jer icon next to the clock, choose Exit, then start Jer again.",
+                    "Jer", MessageBoxButton.OK, MessageBoxImage.Information);
+                Shutdown();
+                return;
+            case InstanceResult.ReplacedOther:
+                _replacedVersion = _instance.ReplacedVersion;
+                break;
         }
 
         base.OnStartup(e);
@@ -77,7 +76,7 @@ public partial class App : Application
 
         _demo = args.Contains("--demo", StringComparer.OrdinalIgnoreCase);
         JsonStore.ReadOnly = _demo;
-        Log.Info($"Jer {Assembly.GetExecutingAssembly().GetName().Version} starting{(_demo ? " (demo)" : "")}");
+        Log.Info($"Jer {AppInfo.VersionText} starting{(_demo ? " (demo)" : "")} from {AppInfo.ExecutablePath}");
 
         try
         {
@@ -91,12 +90,13 @@ public partial class App : Application
             return;
         }
 
-        _showSettingsWait = ThreadPool.RegisterWaitForSingleObject(
-            _showSettingsEvent,
-            (_, _) => Dispatcher.BeginInvoke(() => ShowSettings(null)),
-            null,
-            Timeout.Infinite,
-            executeOnlyOnce: false);
+        _instance?.Listen(
+            showSettings: () => Dispatcher.BeginInvoke(() => ShowSettings(null)),
+            quit: () => Dispatcher.BeginInvoke(() =>
+            {
+                Log.Info("A newer Jer started; closing this one");
+                Shutdown();
+            }));
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -104,15 +104,10 @@ public partial class App : Application
         try
         {
             _saveSettings?.Flush();
-            _showSettingsWait?.Unregister(null);
             _tray?.Dispose();
             _watcher?.Dispose();
             _volume?.Dispose();
-            if (_mutex is not null)
-            {
-                _mutex.ReleaseMutex();
-                _mutex.Dispose();
-            }
+            _instance?.Dispose();
         }
         catch (Exception ex)
         {
@@ -192,8 +187,47 @@ public partial class App : Application
             });
             _settings.FirstRunDone = true;
         }
+        else if (!string.Equals(_settings.LastVersion, AppInfo.VersionText, StringComparison.Ordinal))
+        {
+            ShowUpdatedAlert(_settings.LastVersion ?? _replacedVersion?.ToString(3));
+        }
 
+        _settings.LastVersion = AppInfo.VersionText;
         HandleArguments(args);
+    }
+
+    /// <summary>Tells the user the new version is the one running now.</summary>
+    private void ShowUpdatedAlert(string? previousVersion)
+    {
+        Log.Info($"Updated from {previousVersion ?? "an earlier version"} to {AppInfo.VersionText}");
+        var releaseNotes = $"https://github.com/Ma-Biche/Jer/releases/tag/v{AppInfo.VersionText}";
+        _events.ShowAlert(new AlertInfo
+        {
+            Icon = Ui.Icon("Jer"),
+            Accent = Ui.Accent,
+            Title = $"Jer is now {AppInfo.VersionText}",
+            Message = previousVersion is null
+                ? "Your tasks, water log, shelf and settings came along."
+                : $"Updated from {previousVersion}. Your tasks, water log, shelf and settings came along.",
+            Timeout = TimeSpan.FromSeconds(15),
+            Actions = new[]
+            {
+                new AlertAction("What's new", () => OpenInBrowser(releaseNotes)),
+                new AlertAction("OK", isPrimary: true),
+            },
+        });
+    }
+
+    private static void OpenInBrowser(string url)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Could not open {url}", ex);
+        }
     }
 
     private void HandleArguments(string[] args)
