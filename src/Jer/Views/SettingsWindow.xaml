@@ -1,0 +1,411 @@
+<Window x:Class="Jer.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:Jer.Views"
+        Title="Jer Settings" Width="900" Height="640" MinWidth="780" MinHeight="520"
+        WindowStartupLocation="CenterScreen" Icon="/Assets/Jer.ico"
+        Background="{StaticResource Set.Background}" Foreground="White"
+        FontFamily="{StaticResource Jer.Font}" FontSize="13"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <Style x:Key="PageTitle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource Jer.DisplayFont}"/>
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style x:Key="PageIntro" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource Set.Text2}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,4,0,14"/>
+        </Style>
+        <Style x:Key="ValueText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource Set.Text2}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="Width" Value="76"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+        </Style>
+    </Window.Resources>
+
+    <TabControl x:Name="Tabs" BorderThickness="0" Padding="0" Background="Transparent">
+        <TabControl.Template>
+            <ControlTemplate TargetType="TabControl">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="224"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Background="{StaticResource Set.Sidebar}">
+                        <DockPanel Margin="12,20,12,14">
+                            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10,0,0,22">
+                                <Image Source="/Assets/Jer.png" Width="34" Height="34" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Jer" FontSize="17" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding VersionText}" FontSize="11" Foreground="{StaticResource Set.Text3}"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock DockPanel.Dock="Bottom" Text="Changes apply instantly." FontSize="11" Foreground="{StaticResource Set.Text3}" Margin="12,0,0,0"/>
+                            <StackPanel IsItemsHost="True"/>
+                        </DockPanel>
+                    </Border>
+                    <ContentPresenter Grid.Column="1" ContentSource="SelectedContent"/>
+                </Grid>
+            </ControlTemplate>
+        </TabControl.Template>
+
+        <!-- ================= General ================= -->
+        <TabItem x:Name="GeneralTab" Style="{StaticResource Set.NavItem}">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource Icon.Eyes}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
+                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
+                    <TextBlock Text="General" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <ScrollViewer Style="{StaticResource Set.ScrollViewer}" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="34,28,30,24">
+                    <TextBlock Text="General" Style="{StaticResource PageTitle}"/>
+                    <TextBlock Text="How Jer behaves on your PC." Style="{StaticResource PageIntro}"/>
+
+                    <views:SettingRow Title="Start with Windows" Description="Jer opens on its own when you sign in, so the notch is always there.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding StartWithWindows}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Hide in full screen" Description="Steps aside for full-screen games, videos and slideshows on the same display.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.HideInFullscreen}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Jer mascot" Description="When your PC is quiet for a while, the clock steps aside and a pair of eyes appears. They doze off, and say hello when you're back.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.MascotEnabled}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Minimal notch" Description="The closed notch becomes a thin black line. Lyrics, alerts and hover still work.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.MinimalNotch}"/>
+                    </views:SettingRow>
+
+                    <TextBlock Text="Tips" Style="{StaticResource Set.SectionTitle}"/>
+                    <Border Style="{StaticResource Set.Card}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Set.CardText}" Margin="0" Text="• Hover the notch to open it. Move away and it closes."/>
+                            <TextBlock Style="{StaticResource Set.CardText}" Text="• Switch pages with the mouse wheel, the arrow keys, or the page dots."/>
+                            <TextBlock Style="{StaticResource Set.CardText}" Text="• Drag files onto the notch to keep them on the Shelf."/>
+                            <TextBlock Style="{StaticResource Set.CardText}" Text="• Right-click the Jer icon in the taskbar corner for quick switches."/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ================= Display ================= -->
+        <TabItem x:Name="DisplayTab" Style="{StaticResource Set.NavItem}">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource Icon.Display}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
+                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
+                    <TextBlock Text="Display" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <ScrollViewer Style="{StaticResource Set.ScrollViewer}" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="34,28,30,24">
+                    <TextBlock Text="Display" Style="{StaticResource PageTitle}"/>
+                    <TextBlock Text="Choose the screen the notch lives on. It moves right away." Style="{StaticResource PageIntro}"/>
+
+                    <!-- Map of the connected displays, like Windows display settings -->
+                    <Border Style="{StaticResource Set.Card}" Padding="16,18">
+                        <ItemsControl ItemsSource="{Binding Displays}" Width="480" Height="150" HorizontalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding MapLeft}"/>
+                                    <Setter Property="Canvas.Top" Value="{Binding MapTop}"/>
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Width="{Binding MapWidth}" Height="{Binding MapHeight}" Command="{Binding SelectCommand}" Cursor="Hand" ToolTip="{Binding Description}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="Screen" CornerRadius="6" Background="#FF2E2E35" BorderThickness="2" BorderBrush="#FF46464F">
+                                                    <Grid>
+                                                        <Path x:Name="MiniNotch" Width="36" Height="7" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,-1,0,0"
+                                                              Fill="Black" Data="M0,0 H36 V3.5 A3.5,3.5 0 0 1 32.5,7 H3.5 A3.5,3.5 0 0 1 0,3.5 Z" Visibility="Hidden"/>
+                                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                            <TextBlock Text="{Binding NumberText}" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding ShortName}" FontSize="10.5" Foreground="{StaticResource Set.Text2}" HorizontalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis" MaxWidth="{Binding MapWidth}"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Screen" Property="Background" Value="#FF35353D"/>
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                        <Setter TargetName="Screen" Property="BorderBrush" Value="{StaticResource Jer.Accent}"/>
+                                                        <Setter TargetName="MiniNotch" Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+
+                    <TextBlock Text="Show the notch on" Style="{StaticResource Set.SectionTitle}"/>
+                    <RadioButton GroupName="NotchDisplay" Style="{StaticResource Set.Radio}" IsChecked="{Binding UsePrimary, Mode=TwoWay}">
+                        <StackPanel>
+                            <TextBlock Text="Main display" FontSize="14"/>
+                            <TextBlock Text="Follows whichever screen Windows uses as the main display." FontSize="12" Foreground="{StaticResource Set.Text2}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <ItemsControl ItemsSource="{Binding Displays}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <RadioButton GroupName="NotchDisplay" Style="{StaticResource Set.Radio}" IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" FontSize="14"/>
+                                        <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{StaticResource Set.Text2}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </RadioButton>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="{Binding DisplayNote}" Foreground="{StaticResource Jer.Orange}" FontSize="12.5" TextWrapping="Wrap" Margin="2,4,0,6"
+                               Visibility="{Binding DisplayNote, Converter={StaticResource NullToVisibility}}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <Button Style="{StaticResource Set.Button}" Command="{Binding IdentifyCommand}" Content="Identify displays"/>
+                        <TextBlock Text="Shows each display's number on its screen." FontSize="12" Foreground="{StaticResource Set.Text3}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    </StackPanel>
+
+                    <TextBlock Text="Size" Style="{StaticResource Set.SectionTitle}"/>
+                    <views:SettingRow Title="Notch size" Description="Make the notch bigger or smaller.">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding NotchSizeText}" Style="{StaticResource ValueText}"/>
+                            <Slider Style="{StaticResource Set.Slider}" Minimum="0.8" Maximum="1.4" TickFrequency="0.05" SmallChange="0.05" LargeChange="0.1"
+                                    Value="{Binding Settings.NotchScale}"/>
+                        </StackPanel>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Larger on wide monitors" Description="Grows a little on very wide or high-resolution displays.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.AutoScaleWideDisplays}"/>
+                    </views:SettingRow>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ================= Pages ================= -->
+        <TabItem x:Name="PagesTab" Style="{StaticResource Set.NavItem}">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource Icon.Pages}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
+                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
+                    <TextBlock Text="Pages" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <ScrollViewer Style="{StaticResource Set.ScrollViewer}" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="34,28,30,24">
+                    <TextBlock Text="Pages" Style="{StaticResource PageTitle}"/>
+                    <TextBlock Text="Pick the pages you want in the open notch. At least one stays on." Style="{StaticResource PageIntro}"/>
+                    <views:SettingRow Title="Music" Description="What's playing in any app, with controls, progress and volume.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding MusicPage}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Synced lyrics" Description="Shows lyrics line by line. Jer sends the song title, artist and length to LRCLIB (lrclib.net) to find them.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.LyricsEnabled}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Pomodoro" Description="A focus timer that counts down in the notch.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding PomodoroPage}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Water" Description="A daily water goal with gentle reminders.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding WaterPage}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Shelf" Description="Drop files or text on the notch to keep them close.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding ShelfPage}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="To-do" Description="Tasks with optional reminder times.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding TodoPage}"/>
+                    </views:SettingRow>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ================= Pomodoro ================= -->
+        <TabItem x:Name="PomodoroTab" Style="{StaticResource Set.NavItem}">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource Icon.Timer}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
+                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
+                    <TextBlock Text="Pomodoro" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <ScrollViewer Style="{StaticResource Set.ScrollViewer}" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="34,28,30,24">
+                    <TextBlock Text="Pomodoro" Style="{StaticResource PageTitle}"/>
+                    <TextBlock Text="Session lengths take effect from the next session." Style="{StaticResource PageIntro}"/>
+                    <views:SettingRow Title="Focus">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Settings.FocusMinutes, StringFormat={}{0} min}" Style="{StaticResource ValueText}"/>
+                            <Slider Style="{StaticResource Set.Slider}" Minimum="5" Maximum="90" TickFrequency="5" SmallChange="5" LargeChange="5" Value="{Binding Settings.FocusMinutes}"/>
+                        </StackPanel>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Short break">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Settings.ShortBreakMinutes, StringFormat={}{0} min}" Style="{StaticResource ValueText}"/>
+                            <Slider Style="{StaticResource Set.Slider}" Minimum="1" Maximum="30" TickFrequency="1" SmallChange="1" LargeChange="5" Value="{Binding Settings.ShortBreakMinutes}"/>
+                        </StackPanel>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Long break">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Settings.LongBreakMinutes, StringFormat={}{0} min}" Style="{StaticResource ValueText}"/>
+                            <Slider Style="{StaticResource Set.Slider}" Minimum="5" Maximum="60" TickFrequency="5" SmallChange="5" LargeChange="5" Value="{Binding Settings.LongBreakMinutes}"/>
+                        </StackPanel>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Long break after">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Settings.LongBreakEvery, StringFormat={}{0} sessions}" Style="{StaticResource ValueText}"/>
+                            <Slider Style="{StaticResource Set.Slider}" Minimum="2" Maximum="8" TickFrequency="1" SmallChange="1" LargeChange="1" Value="{Binding Settings.LongBreakEvery}"/>
+                        </StackPanel>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Chime" Description="A soft sound when a session ends.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.PomodoroSound}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Start the next session automatically" Description="Breaks and focus sessions follow each other without a click.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.AutoStartNextSession}"/>
+                    </views:SettingRow>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ================= Water ================= -->
+        <TabItem x:Name="WaterTab" Style="{StaticResource Set.NavItem}">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource Icon.Water}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
+                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
+                    <TextBlock Text="Water" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <ScrollViewer Style="{StaticResource Set.ScrollViewer}" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="34,28,30,24">
+                    <TextBlock Text="Water" Style="{StaticResource PageTitle}"/>
+                    <TextBlock Text="Set your daily goal and when Jer may remind you." Style="{StaticResource PageIntro}"/>
+                    <views:SettingRow Title="Reminders" Description="A gentle nudge when it's been a while since your last drink.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.WaterReminders}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Daily goal">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding WaterGoalText}" Style="{StaticResource ValueText}"/>
+                            <Slider Style="{StaticResource Set.Slider}" Minimum="500" Maximum="5000" TickFrequency="250" SmallChange="250" LargeChange="250" Value="{Binding Settings.WaterGoalMl}"/>
+                        </StackPanel>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Glass or bottle size" Description="How much one tap on Drink adds.">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Settings.WaterCupMl, StringFormat={}{0} ml}" Style="{StaticResource ValueText}"/>
+                            <Slider Style="{StaticResource Set.Slider}" Minimum="50" Maximum="1000" TickFrequency="50" SmallChange="50" LargeChange="50" Value="{Binding Settings.WaterCupMl}"/>
+                        </StackPanel>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Remind me every">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Settings.WaterIntervalMinutes, StringFormat={}{0} min}" Style="{StaticResource ValueText}"/>
+                            <Slider Style="{StaticResource Set.Slider}" Minimum="15" Maximum="180" TickFrequency="15" SmallChange="15" LargeChange="15" Value="{Binding Settings.WaterIntervalMinutes}"/>
+                        </StackPanel>
+                    </views:SettingRow>
+                    <views:SettingRow Title="From" Description="{Binding WaterHoursText}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Settings.WaterStartHour, StringFormat={}{0:00}:00}" Style="{StaticResource ValueText}"/>
+                            <Slider Style="{StaticResource Set.Slider}" Minimum="0" Maximum="22" TickFrequency="1" SmallChange="1" LargeChange="1" Value="{Binding Settings.WaterStartHour}"/>
+                        </StackPanel>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Until">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Settings.WaterEndHour, StringFormat={}{0:00}:00}" Style="{StaticResource ValueText}"/>
+                            <Slider Style="{StaticResource Set.Slider}" Minimum="1" Maximum="23" TickFrequency="1" SmallChange="1" LargeChange="1" Value="{Binding Settings.WaterEndHour}"/>
+                        </StackPanel>
+                    </views:SettingRow>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ================= Alerts ================= -->
+        <TabItem x:Name="AlertsTab" Style="{StaticResource Set.NavItem}">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource Icon.Bell}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
+                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
+                    <TextBlock Text="Alerts" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <ScrollViewer Style="{StaticResource Set.ScrollViewer}" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="34,28,30,24">
+                    <TextBlock Text="Alerts" Style="{StaticResource PageTitle}"/>
+                    <TextBlock Text="Small overlays that pop out of the notch for a moment." Style="{StaticResource PageIntro}"/>
+                    <views:SettingRow Title="Volume" Description="Shows the level when the volume changes or you mute.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.VolumeHud}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Caps Lock" Description="A nudge when Caps Lock turns on or off.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.CapsLockHud}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Keyboard language" Description="Shows the new language when you switch keyboard layouts.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.KeyboardLayoutHud}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Charging and battery" Description="When you plug in or unplug the charger, and when the battery runs low.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.BatteryHud}"/>
+                    </views:SettingRow>
+                    <views:SettingRow Title="Wi-Fi and internet" Description="When you lose or regain your connection.">
+                        <CheckBox Style="{StaticResource Set.Toggle}" IsChecked="{Binding Settings.NetworkHud}"/>
+                    </views:SettingRow>
+                    <TextBlock Text="Jer only checks the state of Caps Lock and the keyboard language. It never records what you type."
+                               FontSize="12" Foreground="{StaticResource Set.Text3}" TextWrapping="Wrap" Margin="2,10,0,0"/>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ================= About ================= -->
+        <TabItem x:Name="AboutTab" Style="{StaticResource Set.NavItem}">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource Icon.Info}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
+                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
+                    <TextBlock Text="About" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <ScrollViewer Style="{StaticResource Set.ScrollViewer}" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="34,28,30,24">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="/Assets/Jer.png" Width="72" Height="72" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <StackPanel Margin="18,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="Jer" Style="{StaticResource PageTitle}"/>
+                            <TextBlock Text="A living notch for Windows." FontSize="13" Foreground="{StaticResource Set.Text2}"/>
+                            <TextBlock Text="{Binding VersionText}" FontSize="12" Foreground="{StaticResource Set.Text3}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <TextBlock Text="Your data" Style="{StaticResource Set.SectionTitle}" Margin="2,26,0,8"/>
+                    <Border Style="{StaticResource Set.Card}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Set.CardText}" Margin="0"
+                                       Text="Tasks, water log, shelf and settings are saved only on this PC. No accounts, no tracking. The only connection Jer makes is to LRCLIB, and only while synced lyrics are on."/>
+                            <TextBlock Text="{Binding DataFolder}" FontSize="12" Foreground="{StaticResource Set.Text3}" Margin="0,10,0,0" TextTrimming="CharacterEllipsis"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <Button Style="{StaticResource Set.Button}" Content="Open data folder" Command="{Binding OpenDataFolderCommand}"/>
+                                <Button Style="{StaticResource Set.Button}" Content="Open log" Command="{Binding OpenLogCommand}" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Jer" Style="{StaticResource Set.SectionTitle}"/>
+                    <Border Style="{StaticResource Set.Card}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource Set.Button}" Content="Project page" Command="{Binding OpenWebsiteCommand}"/>
+                            <Button Style="{StaticResource Set.Button}" Content="Exit Jer" Command="{Binding ExitCommand}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+    </TabControl>
+</Window>

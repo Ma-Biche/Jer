@@ -1,0 +1,21 @@
+<Application x:Class="Jer.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:Jer.Converters"
+             ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Icons.xaml"/>
+                <ResourceDictionary Source="Themes/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+            <conv:EqualsToVisibilityConverter x:Key="EqualsToVisibility"/>
+            <conv:NullToVisibilityConverter x:Key="NullToVisibility"/>
+            <conv:ProgressToDashConverter x:Key="ProgressToDash"/>
+            <conv:ColorToBrushConverter x:Key="ColorToBrush"/>
+            <conv:MultiplyConverter x:Key="Multiply"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
