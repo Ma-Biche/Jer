@@ -975,7 +975,8 @@ public partial class NotchWindow : Window
             return;
         }
 
-        var run = _mode == Mode.Collapsed && !_settings.MinimalNotch && _vm.IsMusicActive && !_hidden;
+        // The bars rest while nobody is at the PC, so music in the background costs almost no CPU.
+        var run = _mode == Mode.Collapsed && !_settings.MinimalNotch && _vm.IsMusicActive && !_hidden && !_vm.IsUserAway;
         if (run && !_equalizerRunning)
         {
             _equalizer.Begin(this, true);

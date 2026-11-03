@@ -100,14 +100,22 @@ function Write-Settings([hashtable]$values = @{}) {
 }
 
 # Memory as Task Manager shows it, and CPU over a quiet stretch.
-function Measure-Jer([string]$label, [string]$path, [int]$seconds = 30) {
+function Measure-Jer([string]$label, [string]$path, [int]$seconds = 30, [switch]$KeepActive) {
     $process = Get-Jer | Where-Object { $_.Path -eq $path } | Select-Object -First 1
     if (-not $process) { throw "No Jer from $path to measure" }
     Start-Sleep -Seconds 5
     $process.Refresh()
     $cpuBefore = $process.TotalProcessorTime
     $started = Get-Date
-    Start-Sleep -Seconds $seconds
+    if ($KeepActive) {
+        # Someone is at the PC: a small mouse move every few seconds, away from the notch.
+        for ($i = 0; $i -lt $seconds; $i += 5) {
+            Move-Mouse ([int]($screen.Width / 2) + ($i % 20)) ([int]($screen.Height / 2))
+            Start-Sleep -Seconds 5
+        }
+    } else {
+        Start-Sleep -Seconds $seconds
+    }
     $process.Refresh()
     $elapsedMs = ((Get-Date) - $started).TotalMilliseconds
     $cpuMs = ($process.TotalProcessorTime - $cpuBefore).TotalMilliseconds
@@ -238,7 +246,7 @@ if ($oldExe) {
     Write-Settings @{ LastVersion = $null; MascotEnabled = $false; LyricsEnabled = $true }
     Start-Jer "--demo" $oldExe
     Assert-OnlyJer $oldExe "start Jer 1.0" | Out-Null
-    Measure-Jer "Jer 1.0.0 (old), music playing" $oldExe
+    Measure-Jer "Jer 1.0.0 (old), music playing" $oldExe -KeepActive
     Start-Process -FilePath $Exe -ArgumentList "--demo --paused" | Out-Null
     Start-Sleep -Seconds 8
     Assert-OnlyJer $Exe "start Jer $Version while 1.0 runs" | Out-Null
@@ -267,7 +275,7 @@ Start-Jer "--demo --paused"
 Measure-Jer "Jer $Version, idle" $Exe
 Write-Settings @{ MascotEnabled = $false; LyricsEnabled = $true }
 Start-Jer "--demo"
-Measure-Jer "Jer $Version, music playing" $Exe
+Measure-Jer "Jer $Version, music playing" $Exe -KeepActive
 Stop-Jer
 
 $table = $script:Measurements | Format-Table -AutoSize | Out-String -Width 200

@@ -43,7 +43,9 @@ public sealed class MusicViewModel : ObservableObject
     private readonly AppSettings _settings;
     private readonly LyricsService _lyrics;
     private readonly VolumeService? _volume;
-    private readonly DispatcherTimer _ticker = new(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(200) };
+    private static readonly TimeSpan ProgressInterval = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan LyricLead = TimeSpan.FromMilliseconds(150);
+    private readonly DispatcherTimer _ticker = new(DispatcherPriority.Render) { Interval = ProgressInterval };
     private readonly Debouncer _lyricsDebounce = new(TimeSpan.FromMilliseconds(450));
     private CancellationTokenSource? _lyricsCts;
     private int _trackRevision;
@@ -147,10 +149,7 @@ public sealed class MusicViewModel : ObservableObject
         {
             _viewNeedsProgress = value;
             UpdateTicker();
-            if (value)
-            {
-                Tick();
-            }
+            Tick();
         }
     }
 
@@ -374,6 +373,43 @@ public sealed class MusicViewModel : ObservableObject
 
     private void Tick()
     {
+        UpdatePosition();
+        ScheduleNextTick();
+    }
+
+    /// <summary>
+    /// The open Music page refreshes four times a second for its progress bar. With the notch closed,
+    /// Jer only wakes up when the next lyric line starts, instead of polling.
+    /// </summary>
+    private void ScheduleNextTick()
+    {
+        if (!_ticker.IsEnabled)
+        {
+            return;
+        }
+
+        var interval = ProgressInterval;
+        if (!_viewNeedsProgress && _current.IsSynced && _current.Lines.Count > 0)
+        {
+            var next = CurrentLineIndex + 1;
+            if (next >= _current.Lines.Count)
+            {
+                interval = TimeSpan.FromSeconds(2);
+            }
+            else
+            {
+                var wait = _current.Lines[next].Time - (Media.GetPosition() + LyricLead) + TimeSpan.FromMilliseconds(10);
+                interval = wait < TimeSpan.FromMilliseconds(30) ? TimeSpan.FromMilliseconds(30)
+                    : wait > TimeSpan.FromSeconds(2) ? TimeSpan.FromSeconds(2)
+                    : wait;
+            }
+        }
+
+        _ticker.Interval = interval; // Restarts the countdown from now.
+    }
+
+    private void UpdatePosition()
+    {
         var position = Media.GetPosition();
         var duration = Media.Duration;
         if (!IsSeeking)
@@ -390,7 +426,7 @@ public sealed class MusicViewModel : ObservableObject
         }
 
         // Light the line up a touch early; it feels more in time with the singer.
-        var index = LyricsService.FindLine(_current.Lines, position + TimeSpan.FromMilliseconds(150));
+        var index = LyricsService.FindLine(_current.Lines, position + LyricLead);
         if (index == CurrentLineIndex)
         {
             return;

@@ -204,6 +204,9 @@ public sealed class NotchViewModel : ObservableObject
 
     public bool IsMusicActive => Music.Media.HasSession && Music.Media.IsPlaying;
 
+    /// <summary>No keyboard or mouse input for a couple of minutes: nobody is watching the notch move.</summary>
+    public bool IsUserAway { get; private set; }
+
     public void SelectPage(NotchPage page)
     {
         if (Pages.All(p => p.Page != page))
@@ -319,6 +322,13 @@ public sealed class NotchViewModel : ObservableObject
     /// <summary>Called once a second with the time since the last keyboard/mouse input.</summary>
     public void UpdateIdle(TimeSpan idle)
     {
+        var away = idle >= TimeSpan.FromMinutes(2);
+        if (away != IsUserAway)
+        {
+            IsUserAway = away;
+            RaiseVisualState(); // Pauses or resumes the equalizer bars.
+        }
+
         var eligible = _settings.MascotEnabled && !_settings.MinimalNotch && !IsExpanded && !HiddenForFullscreen &&
                        CurrentAlert is null && CurrentHud is null && !IsMusicActive && !Pomodoro.IsRunning;
         var delay = TimeSpan.FromSeconds(_settings.MascotDelaySeconds);
