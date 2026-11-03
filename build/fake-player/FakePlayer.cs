@@ -60,7 +60,8 @@ internal static class Program
                 Size = new Size(120, 80),
                 FormBorderStyle = FormBorderStyle.FixedToolWindow,
             };
-            _form.Load += (_, _) => Start();
+            // WinForms can swallow exceptions thrown in Load on 64-bit Windows, so log them here.
+            _form.Load += (_, _) => Guard("start", Start);
             new Thread(ReadCommands) { IsBackground = true }.Start();
             Application.Run(_form);
             return 0;
@@ -82,7 +83,7 @@ internal static class Program
         _smtc.IsPauseEnabled = true;
         _smtc.IsNextEnabled = true;
         _smtc.IsPreviousEnabled = true;
-        _smtc.ButtonPressed += (_, e) => _form.BeginInvoke(new Action(() => OnButton(e.Button)));
+        _smtc.ButtonPressed += (_, e) => _form.BeginInvoke(new Action(() => Guard("button", () => OnButton(e.Button))));
         Log("Registered with the media controls");
         ShowTrack(0);
     }
@@ -128,7 +129,7 @@ internal static class Program
         _positionAt = DateTime.Now;
         Log($"Now playing: {track.Artist} - {track.Title} ({track.Album})");
         var timer = new System.Windows.Forms.Timer { Interval = 1500 };
-        timer.Tick += (_, _) =>
+        timer.Tick += (_, _) => Guard("timeline", () =>
         {
             timer.Stop();
             timer.Dispose();
@@ -137,7 +138,7 @@ internal static class Program
                 PublishTimeline();
                 Log($"Timeline: {track.Seconds}s, at {CurrentPosition().TotalSeconds:0.0}s");
             }
-        };
+        });
         timer.Start();
     }
 
@@ -175,13 +176,11 @@ internal static class Program
             g.DrawString(letter, font, Brushes.White, 30, 20);
         }
 
+        // Don't dispose the wrapper: that would close the Windows stream too.
         var stream = new InMemoryRandomAccessStream();
-        using (var writer = stream.AsStreamForWrite())
-        {
-            bitmap.Save(writer, ImageFormat.Png);
-            writer.Flush();
-        }
-
+        var writer = stream.AsStreamForWrite();
+        bitmap.Save(writer, ImageFormat.Png);
+        writer.Flush();
         stream.Seek(0);
         return stream;
     }
@@ -192,7 +191,7 @@ internal static class Program
         while ((line = Console.In.ReadLine()) is not null)
         {
             var command = line.Trim().ToLowerInvariant();
-            _form?.BeginInvoke(new Action(() =>
+            _form?.BeginInvoke(new Action(() => Guard(command, () =>
             {
                 switch (command)
                 {
@@ -209,7 +208,19 @@ internal static class Program
                         Application.Exit();
                         break;
                 }
-            }));
+            })));
+        }
+    }
+
+    private static void Guard(string what, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception ex)
+        {
+            Log($"FAILED ({what}): {ex}");
         }
     }
 
