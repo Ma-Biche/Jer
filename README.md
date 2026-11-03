@@ -33,7 +33,7 @@ Inspired by [Nusa](https://rama2555.github.io/nusa/). Jer is an independent app 
 
 ## Download
 
-Every push builds `Jer.exe` on GitHub Actions (tab **Actions → Build → Artifacts**):
+Every pull request and every push to `main` builds `Jer.exe` on GitHub Actions (open the run under **Actions → Build**, then **Artifacts**; you need to be signed in to GitHub):
 
 - `Jer-win-x64`: most PCs
 - `Jer-win-arm64`: Windows on ARM (Snapdragon)
