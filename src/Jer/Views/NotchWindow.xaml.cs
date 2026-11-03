@@ -161,9 +161,12 @@ public partial class NotchWindow : Window
         DpiChanged += (_, _) => Dispatcher.BeginInvoke(ApplyPlacement, DispatcherPriority.Background);
         Loaded += (_, _) =>
         {
+            // WPF applies its own initial size after SourceInitialized; place the notch again once it has.
+            ApplyPlacement();
             BuildEqualizer();
             UpdateMode(animate: false);
         };
+        ContentRendered += (_, _) => ApplyPlacement();
     }
 
     private enum Mode

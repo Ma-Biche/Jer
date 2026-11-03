@@ -72,6 +72,21 @@ function Write-Settings([hashtable]$values) {
     $values | ConvertTo-Json | Set-Content -Path (Join-Path $DataDir "settings.json") -Encoding UTF8
 }
 
+function Write-Diagnostics {
+    Write-Host "----- diagnostics -----"
+    $log = Join-Path $DataDir "jer.log"
+    if (Test-Path $log) { Write-Host "jer.log:"; Get-Content $log | Write-Host } else { Write-Host "(no jer.log)" }
+    foreach ($provider in @(".NET Runtime", "Application Error")) {
+        try {
+            Get-WinEvent -FilterHashtable @{ LogName = "Application"; ProviderName = $provider; StartTime = $script:StartedAt } -MaxEvents 4 -ErrorAction Stop |
+                ForEach-Object { Write-Host "[$provider] $($_.TimeCreated)"; Write-Host $_.Message }
+        } catch { Write-Host "(no $provider events)" }
+    }
+    try { Save-Shot "99-failure" } catch { }
+}
+
+$script:StartedAt = Get-Date
+try {
 Move-Mouse ([int]($screen.Width / 2)) ([int]($screen.Height / 2))
 
 # 1. First run shows the welcome alert.
@@ -138,3 +153,8 @@ if (Test-Path $log) {
 }
 
 Write-Host "Smoke test passed."
+}
+catch {
+    Write-Diagnostics
+    throw
+}

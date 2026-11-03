@@ -38,6 +38,12 @@ public partial class App : Application
     private SettingsWindow? _settingsWindow;
     private bool _demo;
 
+    static App()
+    {
+        // Registered before App.xaml loads, so even resource errors end up in jer.log.
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => Log.Error("Unhandled exception", e.ExceptionObject as Exception);
+    }
+
     [DllImport("user32.dll")]
     private static extern bool AllowSetForegroundWindow(int dwProcessId);
 
@@ -63,7 +69,6 @@ public partial class App : Application
 
         base.OnStartup(e);
         DispatcherUnhandledException += OnDispatcherUnhandledException;
-        AppDomain.CurrentDomain.UnhandledException += (_, ex) => Log.Error("Unhandled exception", ex.ExceptionObject as Exception);
         TaskScheduler.UnobservedTaskException += (_, ex) =>
         {
             Log.Warn("Unobserved task exception", ex.Exception);
