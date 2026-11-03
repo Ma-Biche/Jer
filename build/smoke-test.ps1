@@ -276,13 +276,6 @@ Measure-Jer "Jer $Version, idle" $Exe
 Write-Settings @{ MascotEnabled = $false; LyricsEnabled = $true }
 Start-Jer "--demo"
 Measure-Jer "Jer $Version, music playing" $Exe -KeepActive
-# PROBE (temporary): which part costs CPU while music plays?
-Write-Settings @{ MascotEnabled = $false; LyricsEnabled = $false }
-Start-Jer "--demo"
-Measure-Jer "PROBE music, bars only (no lyrics)" $Exe -KeepActive
-Write-Settings @{ MascotEnabled = $false; LyricsEnabled = $true; MinimalNotch = $true }
-Start-Jer "--demo"
-Measure-Jer "PROBE music, lyrics pill only (minimal notch, no bars)" $Exe -KeepActive
 Stop-Jer
 
 $table = $script:Measurements | Format-Table -AutoSize | Out-String -Width 200

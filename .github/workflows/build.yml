@@ -38,6 +38,16 @@ jobs:
         shell: pwsh
         run: ./build/smoke-test.ps1 -Exe dist/Jer.exe -OutDir screenshots
 
+      - name: Build the fake media player (test helper)
+        shell: pwsh
+        run: |
+          dotnet build build/fake-player/FakePlayer.csproj -c Release -o fake
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Media test (song info, controls and lyrics through the Windows media controls)
+        shell: powershell
+        run: ./build/media-test.ps1 -Exe dist/Jer.exe -FakePlayer fake/FakePlayer.exe -OutDir screenshots
+
       - name: Package
         shell: pwsh
         run: |

@@ -948,7 +948,8 @@ public partial class NotchWindow : Window
     private void BuildEqualizer()
     {
         _equalizer = new Storyboard { RepeatBehavior = RepeatBehavior.Forever };
-        Timeline.SetDesiredFrameRate(_equalizer, 24); // Gentle on the CPU.
+        // 15 frames a second is plenty for 14-pixel bars, and costs a third less CPU than 24.
+        Timeline.SetDesiredFrameRate(_equalizer, 15);
         var durations = new[] { 0.46, 0.58, 0.38, 0.52 };
         for (var i = 0; i < EqBars.Children.Count; i++)
         {
