@@ -1,0 +1,67 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish Jer.exe (x64 and arm64)
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF -like 'refs/tags/v*') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '1.0.0' }
+          foreach ($rid in 'win-x64', 'win-arm64') {
+            dotnet publish src/Jer/Jer.csproj -c Release -r $rid --self-contained true `
+              -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+              -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=$version `
+              -o "publish/$rid"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      - name: Smoke test (start Jer, drive it, take screenshots)
+        shell: pwsh
+        run: ./build/smoke-test.ps1 -Exe publish/win-x64/Jer.exe -OutDir screenshots
+
+      - name: Package
+        shell: pwsh
+        run: |
+          Compress-Archive -Path publish/win-x64/Jer.exe -DestinationPath Jer-win-x64.zip
+          Compress-Archive -Path publish/win-arm64/Jer.exe -DestinationPath Jer-win-arm64.zip
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Jer-win-x64
+          path: publish/win-x64/Jer.exe
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Jer-win-arm64
+          path: publish/win-arm64/Jer.exe
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: screenshots
+          path: screenshots
+
+      - name: Publish release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            Jer-win-x64.zip
+            Jer-win-arm64.zip

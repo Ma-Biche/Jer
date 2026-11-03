@@ -1,0 +1,16 @@
+# Build output
+bin/
+obj/
+publish/
+artifacts/
+*.zip
+
+# Smoke test output
+screenshots/
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
