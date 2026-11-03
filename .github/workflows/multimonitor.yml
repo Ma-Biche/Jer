@@ -1,0 +1,75 @@
+name: Multi-monitor check
+
+on:
+  push:
+    branches: [ci/multimonitor-check]
+  workflow_dispatch:
+
+jobs:
+  displays:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish Jer.exe
+        shell: pwsh
+        run: |
+          dotnet publish src/Jer/Jer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o publish
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Add a virtual second display (Indirect Display sample driver)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Invoke-WebRequest https://github.com/ge9/IddSampleDriver/releases/download/0.0.1.4/IddSampleDriver.zip -OutFile idd.zip
+          Expand-Archive idd.zip -DestinationPath C:\ -Force
+          Get-ChildItem C:\IddSampleDriver | Format-Table Name, Length
+          certutil -addstore -f root C:\IddSampleDriver\IddSampleDriver.cer | Out-Null
+          certutil -addstore -f TrustedPublisher C:\IddSampleDriver\IddSampleDriver.cer | Out-Null
+          Add-Type @"
+          using System;
+          using System.Runtime.InteropServices;
+          public static class RootDevice {
+              [StructLayout(LayoutKind.Sequential)]
+              public struct SP_DEVINFO_DATA { public int cbSize; public Guid ClassGuid; public int DevInst; public IntPtr Reserved; }
+              [DllImport("setupapi.dll", SetLastError = true)] static extern IntPtr SetupDiCreateDeviceInfoList(ref Guid classGuid, IntPtr hwnd);
+              [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern bool SetupDiCreateDeviceInfoW(IntPtr set, string name, ref Guid classGuid, string desc, IntPtr hwnd, int flags, ref SP_DEVINFO_DATA data);
+              [DllImport("setupapi.dll", SetLastError = true)] static extern bool SetupDiSetDeviceRegistryPropertyW(IntPtr set, ref SP_DEVINFO_DATA data, int property, byte[] buffer, int size);
+              [DllImport("setupapi.dll", SetLastError = true)] static extern bool SetupDiCallClassInstaller(int fn, IntPtr set, ref SP_DEVINFO_DATA data);
+              [DllImport("setupapi.dll", SetLastError = true)] static extern bool SetupDiDestroyDeviceInfoList(IntPtr set);
+              [DllImport("newdev.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern bool UpdateDriverForPlugAndPlayDevicesW(IntPtr hwnd, string hwid, string inf, int flags, out bool reboot);
+              public static string Install(string hwid, string inf) {
+                  var display = new Guid("4d36e968-e325-11ce-bfc1-08002be10318");
+                  var set = SetupDiCreateDeviceInfoList(ref display, IntPtr.Zero);
+                  var data = new SP_DEVINFO_DATA { cbSize = Marshal.SizeOf(typeof(SP_DEVINFO_DATA)) };
+                  if (!SetupDiCreateDeviceInfoW(set, "Display", ref display, null, IntPtr.Zero, 1, ref data)) return "create failed " + Marshal.GetLastWin32Error();
+                  var ids = System.Text.Encoding.Unicode.GetBytes(hwid + "\0\0");
+                  if (!SetupDiSetDeviceRegistryPropertyW(set, ref data, 1, ids, ids.Length)) return "hwid failed " + Marshal.GetLastWin32Error();
+                  if (!SetupDiCallClassInstaller(0x19, set, ref data)) return "register failed " + Marshal.GetLastWin32Error();
+                  SetupDiDestroyDeviceInfoList(set);
+                  bool reboot;
+                  if (!UpdateDriverForPlugAndPlayDevicesW(IntPtr.Zero, hwid, inf, 1, out reboot)) return "driver failed " + Marshal.GetLastWin32Error();
+                  return "ok reboot=" + reboot;
+              }
+          }
+          "@
+          [RootDevice]::Install("Root\IddSampleDriver", "C:\IddSampleDriver\IddSampleDriver.inf")
+          Start-Sleep -Seconds 12
+          pnputil /enum-devices /class Display
+          Add-Type -AssemblyName System.Windows.Forms
+          [System.Windows.Forms.Screen]::AllScreens | Format-List DeviceName, Primary, Bounds
+
+      - name: Move the notch between displays
+        shell: powershell
+        run: ./build/multimonitor-check.ps1 -Exe publish/Jer.exe -OutDir mm-screenshots
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mm-screenshots
+          path: mm-screenshots
