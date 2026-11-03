@@ -14,11 +14,16 @@ namespace Jer;
 /// </summary>
 internal static class DemoData
 {
-    public static void Apply(NotchViewModel vm)
+    public static void Apply(NotchViewModel vm, bool paused)
     {
         var duration = TimeSpan.FromSeconds(222);
         var position = TimeSpan.FromSeconds(80);
         vm.Music.Media.UseDemo("Golden Hour Drive", "Neon Harbor", "Coastline", duration, position, CreateArtwork());
+        if (paused)
+        {
+            _ = vm.Music.Media.PlayPauseAsync();
+        }
+
         vm.Music.UseDemoLyrics(new Lyrics(new[]
         {
             new LyricLine(TimeSpan.FromSeconds(62), "Windows down on the coast road"),

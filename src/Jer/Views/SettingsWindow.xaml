@@ -30,7 +30,7 @@
         </Style>
     </Window.Resources>
 
-    <TabControl x:Name="Tabs" BorderThickness="0" Padding="0" Background="Transparent">
+    <TabControl x:Name="Tabs" BorderThickness="0" Padding="0" Background="Transparent" Foreground="White">
         <TabControl.Template>
             <ControlTemplate TargetType="TabControl">
                 <Grid>
@@ -60,7 +60,7 @@
         <TabItem x:Name="GeneralTab" Style="{StaticResource Set.NavItem}">
             <TabItem.Header>
                 <StackPanel Orientation="Horizontal">
-                    <Path Data="{StaticResource Icon.Eyes}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
+                    <Path Data="{StaticResource Icon.Settings}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"
                           Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
                     <TextBlock Text="General" VerticalAlignment="Center"/>
                 </StackPanel>

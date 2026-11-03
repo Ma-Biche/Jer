@@ -22,7 +22,7 @@ public sealed class ShelfItemViewModel : ObservableObject
         {
             var text = (model.Text ?? "").Trim().Replace("\r", " ").Replace("\n", " ");
             Name = text.Length > 60 ? text[..60] + "…" : text;
-            Detail = "Text · click to copy";
+            Detail = "Click to copy";
             Icon = Ui.Icon("Text");
         }
         else

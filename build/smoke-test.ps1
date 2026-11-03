@@ -22,6 +22,11 @@ public static class JerInput {
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
     [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, int data, UIntPtr extra);
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+    [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
+    public static void TapCapsLock() {
+        keybd_event(0x14, 0x45, 0x1, UIntPtr.Zero);
+        keybd_event(0x14, 0x45, 0x3, UIntPtr.Zero);
+    }
 }
 "@
 [JerInput]::SetProcessDPIAware() | Out-Null
@@ -135,7 +140,24 @@ foreach ($tab in @("General", "Display", "Pages", "Water", "About")) {
     Save-Shot ("20-settings-" + $tab.ToLower())
 }
 
-# 8. Starting Jer again while it runs opens Settings in the running copy.
+# 8a. Mascot: nothing playing and no input for a while, then a hello when the mouse moves.
+Write-Settings @{ FirstRunDone = $true; StartWithWindows = $false; MascotDelaySeconds = 10 }
+Start-Jer "--demo --paused"
+Start-Sleep -Seconds 9
+Save-Shot "30-mascot"
+Move-Mouse ([int]($screen.Width / 2) + 40) ([int]($screen.Height / 2))
+Start-Sleep -Milliseconds 1300
+Save-Shot "31-mascot-hello"
+Assert-Alive "mascot"
+
+# 8b. Caps Lock overlay.
+[JerInput]::TapCapsLock()
+Start-Sleep -Milliseconds 700
+Save-Shot "32-hud-capslock"
+[JerInput]::TapCapsLock()
+Start-Sleep -Milliseconds 300
+
+# 8c. Starting Jer again while it runs opens Settings in the running copy.
 Start-Jer "--demo"
 Start-Process -FilePath $Exe | Out-Null
 Start-Sleep -Seconds 3

@@ -155,7 +155,7 @@ public partial class App : Application
 
         if (_demo)
         {
-            DemoData.Apply(_vm);
+            DemoData.Apply(_vm, paused: args.Contains("--paused", StringComparer.OrdinalIgnoreCase));
         }
         else
         {

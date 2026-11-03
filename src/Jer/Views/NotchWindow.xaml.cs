@@ -367,6 +367,12 @@ public partial class NotchWindow : Window
             BringToTop();
         }
 
+        if (next == Mode.Expanded && previous != Mode.Expanded)
+        {
+            // Open on the line being sung, not at the top of the song.
+            Dispatcher.BeginInvoke(() => ScrollLyricIntoView(_vm.Music.CurrentLineIndex, animate: false), DispatcherPriority.Loaded);
+        }
+
         UpdateCollapsedContent();
         UpdateMascot();
         UpdateEqualizer();
@@ -993,7 +999,7 @@ public partial class NotchWindow : Window
         UpdateLyricPill();
         if (_mode == Mode.Expanded && index >= 0 && LyricsPanel.IsVisible)
         {
-            Dispatcher.BeginInvoke(() => ScrollLyricIntoView(index), DispatcherPriority.Loaded);
+            Dispatcher.BeginInvoke(() => ScrollLyricIntoView(index, animate: true), DispatcherPriority.Loaded);
         }
     }
 
@@ -1031,16 +1037,24 @@ public partial class NotchWindow : Window
         });
     }
 
-    private void ScrollLyricIntoView(int index)
+    private void ScrollLyricIntoView(int index, bool animate)
     {
-        if (LyricsList.ItemContainerGenerator.ContainerFromIndex(index) is not FrameworkElement line || !line.IsVisible)
+        if (index < 0 || !LyricsPanel.IsVisible ||
+            LyricsList.ItemContainerGenerator.ContainerFromIndex(index) is not FrameworkElement line || !line.IsVisible)
         {
             return;
         }
 
         var top = line.TransformToAncestor(LyricsScroller).Transform(new Point(0, 0)).Y;
-        var target = LyricsScroller.VerticalOffset + top - (LyricsScroller.ViewportHeight - line.ActualHeight) / 2;
-        SmoothScroll(LyricsScroller, Math.Clamp(target, 0, LyricsScroller.ScrollableHeight));
+        var target = Math.Clamp(LyricsScroller.VerticalOffset + top - (LyricsScroller.ViewportHeight - line.ActualHeight) / 2, 0, LyricsScroller.ScrollableHeight);
+        if (animate)
+        {
+            SmoothScroll(LyricsScroller, target);
+        }
+        else
+        {
+            LyricsScroller.ScrollToVerticalOffset(target);
+        }
     }
 
     private void SmoothScroll(ScrollViewer viewer, double target)

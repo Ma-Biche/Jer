@@ -275,7 +275,7 @@
                                                                         </Border>
                                                                     </ControlTemplate>
                                                                 </Button.Template>
-                                                                <TextBlock x:Name="Line" Text="{Binding Text}" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource Jer.Text3}"/>
+                                                                <TextBlock x:Name="Line" Text="{Binding Text}" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource Jer.Text2}"/>
                                                             </Button>
                                                             <DataTemplate.Triggers>
                                                                 <DataTrigger Binding="{Binding IsPast}" Value="True">
